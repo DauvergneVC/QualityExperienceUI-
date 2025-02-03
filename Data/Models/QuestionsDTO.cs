@@ -2,7 +2,7 @@
 {
     public class QuestionsListByTemplateDTO
     {
-        public int? id { get; set; }
+        public int id { get; set; }
         public string? name { get; set; }
         public string? description { get; set; }
         public int? templateId { get; set; }
@@ -15,7 +15,7 @@
     }
     public class Questions
     {
-        public int? id { get; set; }
+        public int id { get; set; }
         public string? name { get; set; }
         public string? description { get; set; }
         public int? order { get; set; }
@@ -33,7 +33,7 @@
 
     public class QuestionEvaluationControl
     {
-        public int? id { get; set; }
+        public int id { get; set; }
         public string? evaluationControl { get; set; }
         public string? description { get; set; }
         public List<int>? values { get; set; }
@@ -41,7 +41,7 @@
 
     public class QuestionItems
     {
-        public int? id { get; set; }
+        public int id { get; set; }
         public string? controlType { get; set; }
         public string? controlSize { get; set; }
         public string? label { get; set; }
@@ -49,12 +49,12 @@
     public class SubGroupResponse
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public int Order { get; set; }
-        public int GroupId { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public int? Order { get; set; }
+        public int? GroupId { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public List<Questions>? Questions { get; set; }
     }
 
@@ -63,18 +63,18 @@
 // Revisar otro
     public class QuestionGroupResponse
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public int TemplateId { get; set; }
-        public int Order { get; set; }
-        public int AuthorId { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public int? Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public int? TemplateId { get; set; }
+        public int? Order { get; set; }
+        public int? AuthorId { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
-        public List<Questions> Questions { get; set; }
+        public List<Questions>? Questions { get; set; }
 
-        public List<SubGroupResponse> SubGroups { get; set; }
+        public List<SubGroupResponse>? SubGroups { get; set; }
 
     }
 }

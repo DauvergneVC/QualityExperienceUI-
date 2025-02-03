@@ -1,10 +1,13 @@
-﻿@using QualityExperienceUI.Data.Models
+﻿@using QualityExperienceUI.Components.Pages.Monitoreo.Evaluacion.Components
+@using QualityExperienceUI.Data.Models
 
 
 @page "/monitoreo/evaluaciones/{templateID:int}"
 @attribute [ReuseTabsPage(Title = "Monitoreo/evaluaciones")]
 
 <h3>Evaluacion</h3>
+@* Animation *@
+<Collapse Accordion>
 
 <Collapse Animation>
 
@@ -12,21 +15,39 @@
     {
         <Panel Key="@group.id.ToString()">
 
-            <HeaderTemplate>
-                @group.name
+            <HeaderTemplate >
+                <div style="display: flex; justify-content: space-between;">
+                    <p>@group.name</p>
+
+                    <RadioGroup Options="@YesNo"
+                    @bind-Value="@groupResponses[group.id]"/>
+                </div>
+                <p>@groupResponses[group.id]</p>
             </HeaderTemplate>
+
             <ChildContent>
+
                 @foreach (var questions in group.questions)
                 {
-                    <Panel Key="@questions.id.ToString()" Header="@questions.name">
-                        @foreach(var questionItem in questions.questionItems)
-                        {
-                            <p>@questionItem.label</p>
-                        }
-                    </Panel>
+                    <div style="display: flex; justify-content: space-between">
+
+                    <p>@questions.name</p>
+
+                    @* Radios *@
+
+                    @* ControlTypes *@
+                        <div style="display: flex; justify-content:right; padding-right:20px ">
+                            @foreach(var questionItems in questions.questionItems)
+                            {
+                                <EvaluationType ControlType="@questionItems.controlType" Label="@questionItems.label"/>
+                            }
+                        </div>
+                    </div>
+                    <Divider />
                 }
             </ChildContent>
         </Panel>
+
     }
     <Panel Header="This is panel header 1" Key="98">
         <p>@text</p>
@@ -44,6 +65,9 @@
     </Panel>
 </Collapse>
 
+<EvaluationType 
+    ControlType='"DropdownSingle"'
+Label="Seleccione una opción"/>
 
 @* To test show *@
 @templateID
@@ -61,19 +85,28 @@
     [Parameter]
     public int templateID { get; set; }
 
+    // Radios
+    private Dictionary<int?, string?> groupResponses = new();
+    RadioOption<string>[] YesNo = new RadioOption<string>[]
+    {
+        new(){ Value = "Yes", Label="Yes", },
+        new(){ Value = "No", Label="No", },
+
+    };
+    //Radio question control
+    private string[,]? questionsRadioValues ;
+    private bool ChangeRadioValues(string value)
+    {
+        if (value == "Yes")
+        {
+            return true;
+        }
+        return false;
+    }
+
+
     // Items to list
     IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
-
-    string text = @"
-A dog is a type of domesticated animal.
-Known for its loyalty and faithfulness,
-it can be found as a welcome guest in many households across the world.
-";
-
-    void Callback(string[] keys)
-    {
-        Console.WriteLine(string.Join(',', keys));
-    }
 
 
     protected override async Task OnInitializedAsync()
@@ -88,6 +121,15 @@ it can be found as a welcome guest in many households across the world.
             else
             {
                 Questions = response.Data;
+                // Inicializar el diccionario de respuestas
+                foreach (var group in Questions)
+                {
+                    groupResponses[group.id] = string.Empty;
+                    foreach (var question in group.questions)
+                    {
+
+                    }
+                }
             }
         }
         catch (Exception ex)
