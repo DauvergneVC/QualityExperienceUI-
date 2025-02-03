@@ -7,8 +7,6 @@
 
 <h3>Evaluacion</h3>
 @* Animation *@
-<Collapse Accordion>
-
 <Collapse Animation>
 
     @foreach (var group in Questions)
@@ -49,32 +47,8 @@
         </Panel>
 
     }
-    <Panel Header="This is panel header 1" Key="98">
-        <p>@text</p>
-    </Panel>
-    <Panel Key="99">
-        <HeaderTemplate>
-            This is panel header 2
-        </HeaderTemplate>
-        <ChildContent>
-            <p>@text</p>
-        </ChildContent>
-    </Panel>
-    <Panel Header="This is panel header 3" Key="100" Disabled>
-        <p>@text</p>
-    </Panel>
+    
 </Collapse>
-
-<EvaluationType 
-    ControlType='"DropdownSingle"'
-Label="Seleccione una opción"/>
-
-@* To test show *@
-@templateID
-@foreach (var irem in Questions)
-{
-    <p>@irem</p>
-}
 
 @* Injects *@
 @inject IApiMethods ApiMethods
