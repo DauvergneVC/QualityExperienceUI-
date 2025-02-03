@@ -1,0 +1,11 @@
+﻿@* For translate and languages *@
+@inject IStringLocalizer<QualityExperienceUI.Local.Resource> localizer
+
+@page "/"
+@attribute [ReuseTabsPage(Pin = true, Closable = false, Title ="Home")]
+
+<PageTitle>@localizer["Home"]</PageTitle>
+
+<h1>@localizer["Hello, world!"]</h1>
+
+@localizer["Welcome to your new app."]

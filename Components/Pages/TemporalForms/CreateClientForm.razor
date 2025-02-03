@@ -1,0 +1,85 @@
+﻿@using QualityExperienceUI.Data.Models
+
+<h3>CreateClientForm</h3>
+
+<Form @ref="form"
+Model="@_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Nombre del cliente" Rules="@(textRules)">
+        <Input @bind-Value="@_model.name" />
+    </FormItem>
+
+    <FormItem Label="Descripcion del cliente" Rules="@(textRules)">
+        <Input @bind-Value="@_model.description" />
+    </FormItem>
+
+    <FormItem Label="Id del pais" Rules="@(idRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.countryID" />
+    </FormItem>
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" Icon="@IconType.Outline.Plus" @onclick="_=>ButtonAction()">
+            Crear cliente
+        </Button>
+    </FormItem>
+</Form>
+
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+    private CreateClientDTO _model { get; set; } = new CreateClientDTO();
+    private Form<CreateClientDTO>? form;
+    private bool formValidate = false;
+
+
+
+    // Validation Rules
+    private FormValidationRule[] idRules = new FormValidationRule[]{
+        new FormValidationRule{ Required = true, Message = "Campo numerico requerido."},
+        new FormValidationRule{ Min = 1, Message = "Id no puede ser 0 o menor."}
+    };
+
+    private FormValidationRule[] textRules = new FormValidationRule[]{
+        new FormValidationRule{ Type = FormFieldType.String, Required = true, Message = "Campo requerido."},
+        new FormValidationRule{ Min=5, Message="Largo minimo del texto = 5"}
+    };
+
+
+    // Button actions
+    private async Task ButtonAction()
+    {
+        try
+        {
+            formValidate = form.Validate();
+
+            if (!formValidate)
+            {
+                _message.Warning("Form no validado");
+            }
+            else
+            {
+                var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateClient(_model));
+                if (!response.IsSuccess)
+                {
+                    _message.Error(response.ErrorMessage);
+                }
+                else
+                {
+                    _message.Success("Cliente creado con exito");
+                    form.Reset();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+
+        }
+    }
+}

@@ -1,0 +1,198 @@
+﻿@using QualityExperienceUI.Data.Models
+@using System.Text.Json
+@inject IStringLocalizer<Local.Data.ToolTips.Tooltips> tooltipsLocalizer;
+
+
+
+<h3>FormUpdateTemplate</h3>
+
+<Form @ref="form" Model="_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+
+    <FormItem Label="Nombre del template" >
+        <Input @bind-Value="@_model.name" />
+    </FormItem>
+
+    <FormItem Label="Descripcion del template">
+        <Input @bind-Value="@_model.description" />
+    </FormItem>
+
+    <FormItem Label="Estado del template" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.status" class="form-control" style="margin-left: 8px;">
+                @foreach (var item in templateState)
+                {
+                    <option value="@item.Value">@item.Name</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="Calculation type" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.calculationType" class="form-control" style="margin-left: 8px;">
+                @foreach (var item in calculationType)
+                {
+                    <option value="@item.Value">@item.Name</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="allowAttachment" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.allowAttachment" class="form-control" style="margin-left: 8px;">
+                @foreach (var item in allowAttachment)
+                {
+                    <option value="@item.Value">@item.Name</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="Tipo de feedback" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.feedbackType" class="form-control" style="margin-left: 8px;">
+                @foreach (var item in feedbackType)
+                {
+                    <option value="@item.Value">@item.Name</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="Template type" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.templateType" class="form-control" style="margin-left: 8px;">
+                @foreach (var item in templateType)
+                {
+                    <option value="@item.Value">@item.Name</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" Icon="@IconType.Outline.Plus" @onclick="_=>ButtonAction()">
+            Actualizar datos del template
+        </Button>
+    </FormItem>
+</Form>
+
+
+@* Injects *@
+@inject IJSRuntime jsRuntime
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+@inject HttpClient Http
+
+@code {
+    // Parameters for form
+    [Parameter]
+    public TemplateListDto templateList { get; set; }
+
+    // Parameters for values
+    [Parameter]
+    public List<NameValuePair>? templateState { get; set; }
+    [Parameter]
+    public List<NameValuePair>? templateType { get; set; }
+    [Parameter]
+    public List<NameValuePair>? calculationType { get; set; }
+    [Parameter]
+    public List<NameValuePair>? allowAttachment { get; set; }
+    [Parameter]
+    public List<NameValuePair>? feedbackType { get; set; }
+
+    // To reload table in templates.razor
+    [Parameter] public EventCallback OnTemplateUpdated { get; set; }
+
+
+    // Vars
+    private Form<TemplateUpdateDTO>? form;
+    private TemplateUpdateDTO _model { get; set; } = new TemplateUpdateDTO();
+    private int id = 0;
+    // Tooltips
+    Dictionary<string, string> toolTips = new Dictionary<string, string>();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Charge all dates into model to edit
+        if (templateList != null)
+        {
+            id = templateList.Id;
+
+            _model.name = templateList.Name;
+            _model.description = templateList.Description;
+            _model.status = GetValueFromList(templateState, templateList.Status);
+            _model.calculationType = GetValueFromList(calculationType, templateList.CalculationType);
+            _model.allowAttachment = GetValueFromList(allowAttachment, templateList.AllowAttachment);
+            _model.feedbackType = GetValueFromList(feedbackType, templateList.FeedbackType);
+            _model.templateType = GetValueFromList(templateType, templateList.TemplateType);
+
+
+        }
+
+    }
+    // To obtain id by Name of NameValuePair
+    private int GetValueFromList(List<NameValuePair>? list, string? name)
+    {
+        if (list == null || name == null)
+        {
+            return 0; // default value
+        }
+
+        var item = list.FirstOrDefault(x => x.Name == name);
+        return item?.Value ?? 0;
+    }
+
+
+    private async Task ButtonAction()
+    {
+        bool confirmDelete = await Confirm($"Are you sure you want to update {_model.name} with the id: {id}?");
+
+        if (confirmDelete)
+        {
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateTemplateAsync(id,_model));
+            if (!response.IsSuccess)
+            {
+                _message.Error(response.ErrorMessage);
+            }
+            else
+            {
+                _message.Success("Template actualizado con exito");
+                form.Reset();
+                await OnTemplateUpdated.InvokeAsync();
+            }
+        }
+    }
+
+    private async Task<bool> Confirm(string message)
+    {
+        return await jsRuntime.InvokeAsync<bool>("confirm", message);
+    }
+}

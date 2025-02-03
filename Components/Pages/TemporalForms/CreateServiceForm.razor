@@ -1,0 +1,166 @@
+﻿@using QualityExperienceUI.Data.Models
+@using System.Text.Json;
+@using QualityExperienceUI.Data.Validations;
+@inject IStringLocalizer<Local.Data.ToolTips.Tooltips> tooltipsLocalizer;
+
+<h3>CreateServiceForm</h3>
+
+<Form @ref="form"
+Model="@_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Nombre del servicio" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.name" />
+    </FormItem>
+
+    <FormItem Label="Descripcion del servicio" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.description" />
+    </FormItem>
+
+    <FormItem Label="Template asociado">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.templateID" class="form-control" style="margin-left: 8px;">
+                <option value="">Seleccione un template</option>
+                @foreach (var item in templatesPair)
+                {
+                    <option value="@item.Value">@item.Key</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+
+    <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.order" />
+    </FormItem>
+
+    <FormItem Label="Id del autor" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.authorID" />
+    </FormItem>
+
+    <FormItem Label="Categoria del servicio">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.serviceCategoryID" class="form-control" style="margin-left: 8px;">
+                <option value="">Seleccione una categoria</option>
+                @foreach (var item in serviceCategoryPair)
+                {
+                    <option value="@item.Value">@item.Key</option>
+                }
+            </InputSelect>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+
+    <FormItem Label="Id del tipo de servicio" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.serviceType" />
+    </FormItem>
+
+    <FormItem Label="Id del tipo de operacion" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.operationType" />
+    </FormItem>
+
+    <FormItem Label="Estado" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.status" />
+    </FormItem>
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" Icon="@IconType.Outline.Plus" @onclick="_=>ButtonAction()">
+            Crear servicio
+        </Button>
+    </FormItem>
+</Form>
+
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+    private CreateServiceDTO _model { get; set; } = new CreateServiceDTO();
+    private Form<CreateServiceDTO>? form;
+    private bool formValidate = false;
+
+    // Editable or possibles parameters
+    #region
+    Dictionary<string, string> toolTips = new Dictionary<string, string>();
+    Dictionary<string, int> templatesPair = new();
+    Dictionary<string, int> serviceCategoryPair = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            // Obtain all values
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+            var responseServiceCategory = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesCategories());
+
+            if (!response.IsSuccess)
+            {
+                _message.Error(response.ErrorMessage);
+            }
+            else
+            {
+                // Charge templates with clients values and names
+                foreach (var template in response.Data)
+                {
+                    templatesPair.Add(template.Name, template.Id);
+                }
+
+                // Categories dictionary
+
+                foreach (var category in responseServiceCategory.Data)
+                {
+                    serviceCategoryPair.Add(category.name, category.id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message.Error(ex.Message);
+        }
+    }
+    #endregion
+
+
+
+    private async Task ButtonAction()
+    {
+        try
+        {
+            formValidate = form.Validate();
+
+            if (!formValidate)
+            {
+                _message.Warning("Form no validado");
+            }
+            else
+            {
+                _model.createdAt = DateTime.Now;
+                _model.updatedAt = DateTime.Now;
+                var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateService(_model));
+                if (!response.IsSuccess)
+                {
+                    _message.Error(response.ErrorMessage);
+                }
+                else
+                {
+                    _message.Success("servicio creado con exito");
+                    form.Reset();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+
+        }
+    }
+}

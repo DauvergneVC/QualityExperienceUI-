@@ -1,0 +1,130 @@
+﻿@using AntDesign.TableModels
+@using QualityExperienceUI.Data.Models
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@page "/services"
+
+<h3>Services</h3>
+
+<Select DataSource="@values.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="Select a category"
+OnSelectedItemChanged="@(item => CategorySelectChange(item))"
+Style="width: 200px">
+    <SelectOptions>
+        @foreach (var valor in values)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+<Select DataSource="@servicesPair.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="Select a service"
+OnSelectedItemChanged="@(item => ServicesSelectorChange(item))"
+Style="width: 200px">
+    <SelectOptions>
+        @foreach (var valor in servicesPair)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+<Table @ref="_table" TItem="ServiceListDTO" DataSource="@(serviceShow != null ? new List<ServiceListDTO> { serviceShow } : new List<ServiceListDTO>())" PageSize="1">
+    <Column TData="int" Title="Id" DataIndex="id" />
+    <Column TData="string" Title="Name" DataIndex="name" />
+    <Column TData="string" Title="Description" DataIndex="description" />
+    <Column TData="int" Title="Template ID" DataIndex="templateID" />
+    <Column TData="object" Title="Template Name" DataIndex="templateName" />
+    <Column TData="int" Title="Order" DataIndex="order" />
+    <Column TData="int" Title="Author ID" DataIndex="authorID" />
+    <Column TData="int" Title="Service Category ID" DataIndex="serviceCategoryID" />
+    <Column TData="object" Title="Service Category Name" DataIndex="serviceCategoryName" />
+    <Column TData="string" Title="Service Type" DataIndex="serviceType" />
+    <Column TData="string" Title="Operation Type" DataIndex="operationType" />
+    <Column TData="string" Title="Status" DataIndex="status" />
+    <Column TData="DateTime" Title="Created At" DataIndex="createdAt" />
+    <Column TData="DateTime" Title="Updated At" DataIndex="updatedAt" />
+
+</Table>
+
+@code {
+    ITable _table;
+
+    IEnumerable<CategoriesListDTO>? categories = new List<CategoriesListDTO>();
+    Dictionary<string, int> values = new();
+    IEnumerable<ServiceListDTO>? services = new List<ServiceListDTO>();
+    Dictionary<string, int> servicesPair = new();
+    ServiceListDTO? serviceShow;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesCategories());
+        if (!response.IsSuccess || response.Data == null)
+        {
+            Console.WriteLine(response.ErrorMessage);
+        }
+        else
+        {
+            categories = response.Data ?? new List<CategoriesListDTO>();
+
+            foreach (var category in categories)
+            {
+                values.Add(category.name, category.id);
+            }
+        }
+
+
+    }
+
+    private async Task CategorySelectChange(int item)
+    {
+        services = null;
+        serviceShow = null;
+        servicesPair.Clear();
+
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesByCategory(item));
+        if (!response.IsSuccess)
+        {
+            await _message.Error($"No services found{response.ErrorMessage}");
+        }
+        else
+        {
+            if (response.Data == null || response.Data.Count() == 0)
+            {
+                await _message.Warning("No services found");
+            }
+            else
+            {
+                services = response.Data;
+                foreach (var service in services)
+                {
+                    servicesPair.Add(service.name, service.id);
+                }
+            }
+            
+        }
+    }
+
+
+    private async Task ServicesSelectorChange(int item)
+    {
+        serviceShow = null;
+
+        foreach (var service in services)
+        {
+            if (service.id == item)
+            {
+                serviceShow = service;
+            }
+        }
+    }
+}

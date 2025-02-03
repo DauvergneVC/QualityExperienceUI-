@@ -1,0 +1,99 @@
+﻿@using QualityExperienceUI.Data.Models
+
+
+@page "/monitoreo/evaluaciones/{templateID:int}"
+@attribute [ReuseTabsPage(Title = "Monitoreo/evaluaciones")]
+
+<h3>Evaluacion</h3>
+
+<Collapse Animation>
+
+    @foreach (var group in Questions)
+    {
+        <Panel Key="@group.id.ToString()">
+
+            <HeaderTemplate>
+                @group.name
+            </HeaderTemplate>
+            <ChildContent>
+                @foreach (var questions in group.questions)
+                {
+                    <Panel Key="@questions.id.ToString()" Header="@questions.name">
+                        @foreach(var questionItem in questions.questionItems)
+                        {
+                            <p>@questionItem.label</p>
+                        }
+                    </Panel>
+                }
+            </ChildContent>
+        </Panel>
+    }
+    <Panel Header="This is panel header 1" Key="98">
+        <p>@text</p>
+    </Panel>
+    <Panel Key="99">
+        <HeaderTemplate>
+            This is panel header 2
+        </HeaderTemplate>
+        <ChildContent>
+            <p>@text</p>
+        </ChildContent>
+    </Panel>
+    <Panel Header="This is panel header 3" Key="100" Disabled>
+        <p>@text</p>
+    </Panel>
+</Collapse>
+
+
+@* To test show *@
+@templateID
+@foreach (var irem in Questions)
+{
+    <p>@irem</p>
+}
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+    [Parameter]
+    public int templateID { get; set; }
+
+    // Items to list
+    IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
+
+    string text = @"
+A dog is a type of domesticated animal.
+Known for its loyalty and faithfulness,
+it can be found as a welcome guest in many households across the world.
+";
+
+    void Callback(string[] keys)
+    {
+        Console.WriteLine(string.Join(',', keys));
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetQuestionsByTemplate(templateID));
+            if (!response.IsSuccess || response.Data == null)
+            {
+                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+            }
+            else
+            {
+                Questions = response.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log or display the full exception details
+            _message.Error($"Excepción completa: {ex.ToString()}");
+        }
+    }
+}

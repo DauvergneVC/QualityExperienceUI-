@@ -1,0 +1,280 @@
+﻿@using QualityExperienceUI.Data.Models
+@using System.Text.Json;
+@using QualityExperienceUI.Data.Validations;
+
+@inject IStringLocalizer<Local.Data.ToolTips.Tooltips> tooltipsLocalizer;
+
+
+<h3>FormTemplate</h3>
+
+
+@* Form *@
+<Form @ref="form"
+Model="@_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Cliente" Rules="@(FormValidationRules.selectRules)">
+
+        <Select DataSource="@clientsPair.Values"
+        TItemValue="int"
+        TItem="int"
+        EnableSearch
+        Placeholder="Select a client"
+        Value="@_model.ClientID"
+        ValueChanged="value => { _model.ClientID = value; }"
+        ValueExpression="@(() => _model.ClientID)"
+        DefaultActiveFirstOption="false"
+        DefaultValue="0">
+            <SelectOptions>
+                @foreach (var client in clientsPair)
+                {
+                    <SelectOption TItemValue="int" TItem="int" Value="@client.Value" Label="@client.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+
+    <FormItem Label="Nombre del template" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.Name" />
+    </FormItem>
+
+    <FormItem Label="Descripcion del template" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.Description" />
+    </FormItem>
+
+    <FormItem Label="Id del autor" Rules="@(FormValidationRules.numericRules)">
+        <Input @bind-Value="@_model.AuthorID" />
+    </FormItem>
+
+
+    <FormItem Label="Calculation type" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@calculation.Values" 
+            TItemValue="string" 
+            TItem="string"
+            EnableSearch 
+            Placeholder="Select a calculation type" 
+            Value="@_model.CalculationType" 
+            ValueChanged="value => { _model.CalculationType = value; }" 
+            ValueExpression="@(() => _model.CalculationType)" 
+            DefaultActiveFirstOption="false" 
+            DefaultValue='"0"'> 
+                <SelectOptions> 
+                    @foreach (var item in calculation) 
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    } 
+                </SelectOptions> 
+            </Select> 
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="allowAttachment" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@allowAttachmentDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Allow attachment?"
+            Value="@_model.AllowAttachment"
+            ValueChanged="value => { _model.AllowAttachment = value; }"
+            ValueExpression="@(() => _model.AllowAttachment)"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in allowAttachmentDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="Tipo de feedback" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@feedbackTypeDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Select a feedback type"
+            Value="@_model.FeedbackType"
+            ValueChanged="value => { _model.FeedbackType = value; }"
+            ValueExpression="@(() => _model.FeedbackType)"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in feedbackTypeDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="Template type" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="templateTypeDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Select a template type"
+            Value="@_model.TemplateType"
+            ValueChanged="value => { _model.TemplateType = value; }"
+            ValueExpression="@(() => _model.TemplateType)"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in templateTypeDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>ButtonAction()" >
+            Crear template
+        </Button>
+
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>OnTemplateCreated.InvokeAsync()" Danger >
+            Cancelar
+        </Button>
+    </FormItem>
+
+</Form>
+
+
+
+@* Injects*@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+
+
+    /// <summary>
+    /// Form
+    /// </summary>
+
+    // Vars
+    private bool formValidate = false;
+
+    [Parameter]
+    public Dictionary<string, int> clientsPair { get; set; }
+
+    [Parameter]
+    public List<NameValuePair>? templateType { get; set; }
+    private Dictionary<string, string>? templateTypeDictionary { get; set; } = new();
+
+    [Parameter]
+    public List<NameValuePair>? calculationType { get; set; }
+    private Dictionary<string, string>? calculation { get; set; } = new();
+
+    [Parameter]
+    public List<NameValuePair>? allowAttachment { get; set; }
+    private Dictionary<string, string>? allowAttachmentDictionary { get; set; } = new();
+
+    [Parameter]
+    public List<NameValuePair>? feedbackType { get; set; }
+    private Dictionary<string, string>? feedbackTypeDictionary { get; set; } = new();
+
+    // To reload table in templates.razor
+    [Parameter] public EventCallback OnTemplateCreated { get; set; }
+
+    // For Form 
+    private TemplateCreateDto _model { get; set; } = new TemplateCreateDto();
+    private Form<TemplateCreateDto>? form; // Para manejar el form y poder limpiarlo.
+
+
+
+
+    // Button actions
+    private async Task ButtonAction()
+    {
+        try
+        {
+            formValidate = form.Validate();
+
+            if (!formValidate)
+            {
+                _message.Warning("Form no validado");
+            }
+            else
+            {
+                var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateTemplateAsync(_model));
+                if (!response.IsSuccess)
+                {
+                    _message.Error(response.ErrorMessage);
+                }
+                else
+                {
+                    form.Reset();
+                    await OnTemplateCreated.InvokeAsync();
+                    _message.Success("Template creado con exito");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Leer el contenido del archivo JSON
+        // string jsonContenido = File.ReadAllText("wwwroot/Data/tooltips.json");
+        // Deserializar el JSON a un diccionario
+        // toolTips = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonContenido);
+
+        // Charge dictionaries
+        foreach (var type in templateType)
+        {
+            templateTypeDictionary.Add(type.Name, type.Value.ToString());
+        }
+
+        foreach (var calculations in calculationType)
+        {
+            calculation.Add(calculations.Name, calculations.Value.ToString());
+        }
+
+        foreach (var attachment in allowAttachment)
+        {
+            allowAttachmentDictionary.Add(attachment.Name, attachment.Value.ToString());
+        }
+
+        foreach (var feedback in feedbackType)
+        {
+            feedbackTypeDictionary.Add(feedback.Name, feedback.Value.ToString());
+        }
+    }
+}

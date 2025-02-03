@@ -1,0 +1,73 @@
+﻿@inject NavigationManager NavigationManager
+@inject IStringLocalizer<Local.Resources.Resource> localizer;
+
+
+@page "/monitoreo"
+@attribute [ReuseTabsPage(Title = "Monitoreo")]
+
+
+<h3>@localizer["Title"]</h3>
+
+<Select DataSource="@templatesPair.Values"
+        TItemValue="int"
+        TItem="int"
+        EnableSearch
+        Placeholder="@localizer["SelectTemplatePlaceHolder"]"
+        Value="@templateID"
+        ValueChanged="value => { templateID = value; }"
+        ValueExpression="@(() => templateID)"
+        DefaultActiveFirstOption="false"
+        DefaultValue='0'>
+    <SelectOptions>
+        @foreach (var item in templatesPair)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@item.Value" Label="@item.Key" />
+        }
+    </SelectOptions>
+</Select>
+<Button OnClick="NavigateToEvaluaciones">@localizer["NavegationButtonEvaluations"]</Button>
+
+
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+    Dictionary<string, int> templatesPair = new();
+    public int templateID = 0;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+
+            // Obtain all values
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+
+            if (!response.IsSuccess)
+            {
+                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+            }
+            else
+            {
+                // Charge templates with templates values and names
+                foreach (var template in response.Data)
+                {
+                    templatesPair.Add(template.Name, template.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+
+    private void NavigateToEvaluaciones()
+    {
+        NavigationManager.NavigateTo($"/monitoreo/evaluaciones/{templateID}");
+    }
+}
