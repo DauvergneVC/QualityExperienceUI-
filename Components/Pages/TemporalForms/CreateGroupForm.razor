@@ -1,0 +1,130 @@
+﻿@using QualityExperienceUI.Data.Models
+@using System.Text.Json;
+@using QualityExperienceUI.Data.Validations;
+
+
+<h3>CreateGroupForm</h3>
+
+<Form @ref="form"
+Model="@_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Nombre del grupo" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.name" />
+    </FormItem>
+
+    <FormItem Label="Descripcion del grupo" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@_model.description" />
+    </FormItem>
+
+
+    <FormItem Label="Template asociado">
+        <div style="display: flex; align-items: center;">
+            <InputSelect @bind-Value="@_model.templateID" class="form-control" style="margin-left: 8px;">
+                <option value="">Seleccione un template</option>
+                @foreach (var item in templatesPair)
+                {
+                    <option value="@item.Value">@item.Key</option>
+                }
+            </InputSelect>
+        </div>
+    </FormItem>
+
+
+    <FormItem Label="Parent Id" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.parentID" />
+    </FormItem>
+    
+    <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.order" />
+    </FormItem>
+
+    <FormItem Label="Id del autor" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@_model.authorID" />
+    </FormItem>
+
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" Icon="@IconType.Outline.Plus" @onclick="_=>ButtonAction()">
+            Crear grupo
+        </Button>
+    </FormItem>
+</Form>
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+
+@code {
+    private CreateGroupDTO _model { get; set; } = new CreateGroupDTO();
+    private Form<CreateGroupDTO>? form;
+    private bool formValidate = false;
+
+
+    // Editable or possibles parameters
+    #region
+    Dictionary<string, int> templatesPair = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Obtain all values
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+
+            if (!response.IsSuccess)
+            {
+                _message.Error(response.ErrorMessage);
+            }
+            else
+            {
+                // Charge Dictionary with templates values and names
+                foreach (var template in response.Data)
+                {
+                    templatesPair.Add(template.Name, template.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _message.Error(ex.Message);
+        }
+    }
+    #endregion
+
+
+    private async Task ButtonAction()
+    {
+        try
+        {
+            formValidate = form.Validate();
+
+            if (!formValidate)
+            {
+                _message.Warning("Form no validado");
+            }
+            else
+            {
+                var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateGroups(_model));
+                if (!response.IsSuccess)
+                {
+                    _message.Error(response.ErrorMessage);
+                }
+                else
+                {
+                    _message.Success("grupo creado con exito");
+                    form.Reset();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+
+        }
+    }
+}

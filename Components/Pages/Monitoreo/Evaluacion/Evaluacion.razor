@@ -1,0 +1,119 @@
+﻿@using QualityExperienceUI.Components.Pages.Monitoreo.Evaluacion.Components
+@using QualityExperienceUI.Data.Models
+
+
+@page "/monitoreo/evaluaciones/{templateID:int}"
+@attribute [ReuseTabsPage(Title = "Monitoreo/evaluaciones")]
+
+<h3>Evaluacion</h3>
+@* Animation *@
+<Collapse Accordion>
+
+    @foreach (var group in Questions)
+    {
+        <Panel Key="@group.id.ToString()">
+
+            <HeaderTemplate >
+                <div style="display: flex; justify-content: space-between;">
+                    <p>@group.name</p>
+
+                    <RadioGroup Options="@YesNo"
+                    @bind-Value="@groupResponses[group.id]"/>
+                </div>
+                <p>@groupResponses[group.id]</p>
+            </HeaderTemplate>
+
+            <ChildContent>
+
+                @foreach (var questions in group.questions)
+                {
+                    <div style="display: flex; justify-content: space-between">
+
+                    <p>@questions.name</p>
+
+                    @* Radios *@
+
+                    @* ControlTypes *@
+                        <div style="display: flex; justify-content:right; padding-right:20px ">
+                            @foreach(var questionItems in questions.questionItems)
+                            {
+                                <EvaluationType ControlType="@questionItems.controlType" Label="@questionItems.label"/>
+                            }
+                        </div>
+                    </div>
+                    <Divider />
+                }
+            </ChildContent>
+        </Panel>
+
+    }
+</Collapse>
+
+<EvaluationType 
+    ControlType='"DropdownSingle"'
+Label="Seleccione una opción"/>
+
+
+@* Injects *@
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+@code {
+    [Parameter]
+    public int templateID { get; set; }
+
+    // Radios
+    private Dictionary<int?, string?> groupResponses = new();
+    RadioOption<string>[] YesNo = new RadioOption<string>[]
+    {
+        new(){ Value = "Yes", Label="Yes", },
+        new(){ Value = "No", Label="No", },
+
+    };
+    //Radio question control
+    private string[,]? questionsRadioValues ;
+    private bool ChangeRadioValues(string value)
+    {
+        if (value == "Yes")
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+    // Items to list
+    IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetQuestionsByTemplate(templateID));
+            if (!response.IsSuccess || response.Data == null)
+            {
+                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+            }
+            else
+            {
+                Questions = response.Data;
+                // Inicializar el diccionario de respuestas
+                foreach (var group in Questions)
+                {
+                    groupResponses[group.id] = string.Empty;
+                    foreach (var question in group.questions)
+                    {
+
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log or display the full exception details
+            _message.Error($"Excepción completa: {ex.ToString()}");
+        }
+    }
+}

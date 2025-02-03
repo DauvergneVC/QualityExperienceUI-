@@ -1,0 +1,87 @@
+﻿<div>
+    @switch (ControlType)
+    {
+        case "Text":
+            <label>@Label</label>
+            <Input TValue="string"/>
+            break;
+
+        case "Number":
+            <label>@Label</label>
+            <AntDesign.InputNumber TValue="int" />
+            break;
+
+        case "TextArea":
+            <label>@Label</label>
+            <InputTextArea @bind-Value="CurrentValue" />
+            break;
+
+        case "DropdownSingle":
+            <label>@Label</label>
+            <Dropdown>
+                <Overlay>
+                    <Menu>
+                        <MenuItem>
+                            <a target="_blank" rel="noopener noreferrer" href="http://www.alipay.com/">
+                                1st menu item
+                            </a>
+                        </MenuItem>
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <a class="ant-dropdown-link" @onclick:preventDefault>
+                        Hover me <Icon Type="@IconType.Outline.Down" />
+                    </a>
+                </ChildContent>
+            </Dropdown>
+            break;
+
+        case "DropdownMultiple":
+            <label>@Label</label>
+            <Dropdown>
+                <Overlay>
+                    <Menu>
+                        <MenuItem>
+                            <a target="_blank" rel="noopener noreferrer" href="http://www.alipay.com/">
+                                1st menu item
+                            </a>
+                        </MenuItem>
+                        <MenuItem>
+                            <a target="_blank" rel="noopener noreferrer" href="http://www.taobao.com/">
+                                2nd menu item
+                            </a>
+                        </MenuItem>
+                        <MenuItem>
+                            <a target="_blank" rel="noopener noreferrer" href="http://www.tmall.com/">
+                                3rd menu item
+                            </a>
+                        </MenuItem>
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <a class="ant-dropdown-link" @onclick:preventDefault>
+                        Hover me <Icon Type="@IconType.Outline.Down" />
+                    </a>
+                </ChildContent>
+            </Dropdown>
+            break;
+        default:
+            <span>Control no soportado: @ControlType</span>
+            break;
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public string ControlType { get; set; }
+
+    [Parameter]
+    public string Label { get; set; }
+
+    [Parameter]
+    public string CurrentValue { get; set; }
+
+    [Parameter]
+    public List<(string Value, string Label)> Options { get; set; } = new();
+}
