@@ -13,6 +13,10 @@ builder.Services.AddRazorComponents()
 builder.Services.AddLocalization();
 builder.Services.AddControllers();
 
+//Detailed errors ADD
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options => { options.DetailedErrors = true; });
+
 // AntDesign ADD
 builder.Services.AddAntDesign();
 
