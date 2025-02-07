@@ -38,7 +38,7 @@ Style="width: 200px">
     </SelectOptions>
 </Select>
 
-<Table @ref="_table" TItem="ServiceListDTO" DataSource="@(serviceShow != null ? new List<ServiceListDTO> { serviceShow } : new List<ServiceListDTO>())" PageSize="1">
+<Table @ref="_table" TItem="ServiceByCategorieListDTO" DataSource="@(serviceShow != null ? new List<ServiceByCategorieListDTO> { serviceShow } : new List<ServiceByCategorieListDTO>())" PageSize="1">
     <Column TData="int" Title="Id" DataIndex="id" />
     <Column TData="string" Title="Name" DataIndex="name" />
     <Column TData="string" Title="Description" DataIndex="description" />
@@ -61,9 +61,9 @@ Style="width: 200px">
 
     IEnumerable<CategoriesListDTO>? categories = new List<CategoriesListDTO>();
     Dictionary<string, int> values = new();
-    IEnumerable<ServiceListDTO>? services = new List<ServiceListDTO>();
+    IEnumerable<ServiceByCategorieListDTO>? services = new List<ServiceByCategorieListDTO>();
     Dictionary<string, int> servicesPair = new();
-    ServiceListDTO? serviceShow;
+    ServiceByCategorieListDTO? serviceShow;
 
     protected override async Task OnInitializedAsync()
     {

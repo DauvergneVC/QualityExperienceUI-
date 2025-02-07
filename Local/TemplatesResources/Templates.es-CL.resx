@@ -156,8 +156,8 @@
   <data name="SelectTypePlaceholder" xml:space="preserve">
     <value>Tipo de template</value>
   </data>
-  <data name="TableColumnActions" xml:space="preserve">
-    <value>Acciones</value>
+  <data name="TableColumnEdit" xml:space="preserve">
+    <value>Editar</value>
   </data>
   <data name="TableColumnDescription" xml:space="preserve">
     <value>Descripción</value>
@@ -212,5 +212,17 @@
   </data>
   <data name="Title" xml:space="preserve">
     <value>Plantillas</value>
+  </data>
+  <data name="NoTemplatesfound" xml:space="preserve">
+    <value>No se encontraron plantillas</value>
+  </data>
+  <data name="DateFormater" xml:space="preserve">
+    <value>dd 'de' MMMM 'de' yyyy</value>
+  </data>
+  <data name="DateTimeFormater" xml:space="preserve">
+    <value>dd 'de' MMMM 'de' yyyy HH:mm</value>
+  </data>
+  <data name="TableViewButton" xml:space="preserve">
+    <value>Ver y editar plantilla</value>
   </data>
 </root>

@@ -97,6 +97,24 @@ namespace QualityExperienceUI.Local.TemplatesResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to yyyy - MM - dd.
+        /// </summary>
+        public static string DateFormater {
+            get {
+                return ResourceManager.GetString("DateFormater", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to yyyy - MM - dd HH:mm.
+        /// </summary>
+        public static string DateTimeFormater {
+            get {
+                return ResourceManager.GetString("DateTimeFormater", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Create template.
         /// </summary>
         public static string DrawerCreateTitle {
@@ -142,6 +160,15 @@ namespace QualityExperienceUI.Local.TemplatesResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No templates found.
+        /// </summary>
+        public static string NoTemplatesfound {
+            get {
+                return ResourceManager.GetString("NoTemplatesfound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Search.
         /// </summary>
         public static string SearchButtonFilter {
@@ -178,20 +205,20 @@ namespace QualityExperienceUI.Local.TemplatesResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Actions.
-        /// </summary>
-        public static string TableColumnActions {
-            get {
-                return ResourceManager.GetString("TableColumnActions", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Description.
         /// </summary>
         public static string TableColumnDescription {
             get {
                 return ResourceManager.GetString("TableColumnDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edit.
+        /// </summary>
+        public static string TableColumnEdit {
+            get {
+                return ResourceManager.GetString("TableColumnEdit", resourceCulture);
             }
         }
         
@@ -318,6 +345,15 @@ namespace QualityExperienceUI.Local.TemplatesResources {
         public static string TableTitle {
             get {
                 return ResourceManager.GetString("TableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View and edit template.
+        /// </summary>
+        public static string TableViewButton {
+            get {
+                return ResourceManager.GetString("TableViewButton", resourceCulture);
             }
         }
         

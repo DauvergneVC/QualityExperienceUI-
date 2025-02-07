@@ -1,198 +1,60 @@
-﻿@using QualityExperienceUI.Data.Models
-@using AntDesign.Filters
+﻿@* Usings *@
+@using QualityExperienceUI.Data.Models
 @using QualityExperienceUI.Components.Pages.Templates.Components;
-@inject IStringLocalizer<QualityExperienceUI.Local.TemplatesResources.Templates> localizer;
 
 @page "/templates"
 @attribute [ReuseTabsPage(Title = "Templates")]
 
-
+@* Page Content *@
 <h2>@localizer["Title"]</h2>
-
-<br />
-
-@* Filter *@
-<h3>@localizer["FilterTitle"]</h3>
-
-<Select DataSource="@clientsPair.Values"
-TItemValue="int"
-TItem="int"
-EnableSearch
-Placeholder="@localizer["SelectClient"]"
-OnSelectedItemChanged="@(item =>ClientsSelectorChange(item))"
-Style="width: 200px">
-
-    <SelectOptions>
-        @foreach (var valor in clientsPair)
-        {
-            <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Key" />
-        }
-    </SelectOptions>
-</Select>
-
-@if (restFilters){
-    @* Template status *@
-    <Select TItemValue="int"
-    TItem="int"
-    EnableSearch
-    Placeholder="@localizer["SelectStatePlaceHolder"]"
-    OnSelectedItemChanged="@(item =>SelectStatusChange(item))"
-    Style="width: 200px">
-
-        <SelectOptions>
-            @foreach (var valor in templateState)
-            {
-                <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Name" />
-            }
-        </SelectOptions>
-    </Select>
-
-    @* Template type *@
-    <Select TItemValue="int"
-    TItem="int"
-    EnableSearch
-    Placeholder="@localizer["SelectTypePlaceholder"]"
-    OnSelectedItemChanged="@(item =>SelectTypeChange(item))"
-    Style="width: 200px">
-
-        <SelectOptions>
-            @foreach (var valor in templateType)
-            {
-                <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Name" />
-            }
-        </SelectOptions>
-    </Select>
-
-    @* Author ID *@
-    <Input Placeholder="@localizer["InputAuthorIDPlaceholder"]" @bind-Value="authorID" Style="width: 200px" />
-
-    @* Date range *@
-
-
-
-    @* Buttons *@
-    <Button @onclick="_=>SearchButton()">@localizer["SearchButtonFilter"]</Button>
-    <Button @onclick="_=>ClearButton()">@localizer["ClearButtonFilter"]</Button>
-}
-
-
-<br />
-<br />
-
-@* Table to show templates *@
-<h3>@localizer["TableTitle"]</h3>
-
-<Table @ref="_table" PageSize="5" DataSource="@(templates != null ? templates: new List<TemplateListDto>())" Size="TableSize.Middle" Bordered="false" RowExpandable="@(record=> true)" Locale="_tableLocale">
-    <ColumnDefinitions>
-        <PropertyColumn Property="c=>c.Name"
-        Title="@localizer["TableColumnName"]"
-        SorterCompare="@((a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase))"
-        SortDirections="new[] { SortDirection.Ascending, SortDirection.Descending }" 
-        Filterable FieldFilterType="simpleStringFilter" />
-        <PropertyColumn Property="c=>c.Description" 
-        Title="@localizer["TableColumnDescription"]" />
-        <PropertyColumn Property="c=>c.Status"
-        Title="@localizer["TableColumnStatus"]">
-            @if (context.Status == "Inactive")
-            {
-                color = TagColor.Volcano;
-            }
-            else
-            {
-                color = context.Status == "Draft" ? TagColor.GeekBlue : TagColor.Green;
-            }
-            <Tag Color="@color">@context.Status</Tag>
-        </PropertyColumn>
-        <ActionColumn Title="@localizer["TableColumnActions"]">
-            <CellRender Context="cellData">
-                <a style="margin-left: 10px,color: blue;" @onclick="() => EditRow(context)">@localizer["ActionTableEdit"]</a> <br />
-                <a style="margin-left: 10px,color: blue;" @onclick="()=> SoftDeleteRow(context)">@localizer["ActionTableSoftDelete"]</a> <br />
-                <a style="margin-left: 10px,color: blue;" @onclick="()=> DeleteRow(context)">@localizer["ActionTableDelete"]</a>
-            </CellRender>
-        </ActionColumn>
-    </ColumnDefinitions>
-    <ExpandTemplate>
-        <p>@localizer["TableExpandID"]: @context.Data.Id</p>
-        <p>@localizer["TableExpandAuthorID"]: @context.Data.AuthorID</p>
-        <p>@localizer["TableExpandClientID"]: @context.Data.ClientID</p>
-        <p>@localizer["TableExpandIsArchived"] : @context.Data.Archived</p>
-        <p>@localizer["TableExpandCalculationType"]: @context.Data.CalculationType</p>
-        <p>@localizer["TableExpandAllowAttachment"]: @context.Data.AllowAttachment</p>
-        <p>@localizer["TableExpandFeedbackType"]: @context.Data.FeedbackType</p>
-        <p>@localizer["TableExpandTemplateType"]: @context.Data.TemplateType</p>
-        <p>@localizer["TemplateExpandCreatedAt"]: @context.Data.CreatedAt</p>
-        <p>@localizer["TemplateExpandUpdatedAt"]: @context.Data.UpdatedAt</p>
-    </ExpandTemplate>
-
-</Table>
-
-
-
-
-
-@* Drawers for create template *@
-@* If para no cargar parametros del form hasta seleccionarlos *@
-
-<Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>visible = true">@localizer["DrawerShowButton"]</Button>
-@if(visible)
+@if (isReady)
 {
-    <div>
-        <Drawer Closable="true" Width="720" Visible="visible" Title="@(localizer["DrawerCreateTitle"].Value)" OnClose="_=>close()">
-            <FormTemplate clientsPair="clientsPair"
-            templateType="templateType"
-            calculationType="calculationType"
-            allowAttachment="allowAttachment"
-            feedbackType="feedbackType"
-            OnTemplateCreated="OnTemplateCreated" />
-        </Drawer>
-    </div>
-}
-
-@if (visibleEdit){
-    <div>
-        <Drawer Closable="true" Width="720" Visible="visibleEdit" title="@(localizer["DrawerEditTitle"].Value)" OnClose="_=>close()">
-            <FormUpdateTemplate 
-            templateList="sendTemplateToUpdate"
+    @* Filter *@
+    <Filter clientsPair="clientsPair"
             templateState="templateState"
             templateType="templateType"
-            calculationType="calculationType"
-            allowAttachment="allowAttachment"
-            feedbackType="feedbackType"
-            OnTemplateUpdated="OnTemplateUpdated" />
-        </Drawer>
-    </div>
+            FilterValuesSearchExecute="HandleSearchFilterButton"
+            ClearTask="HandleClearFilterButton" />
+    @* Table to show templates *@
+    <TableTemplates templates="@templates" />
 
+    @* Drawers for create template *@
+    @* If para no cargar parametros del form hasta seleccionarlos *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>visible = true">@localizer["DrawerShowButton"]</Button>
+    @if (visible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="visible" Title="@(localizer["DrawerCreateTitle"].Value)" OnClose="_=>close()">
+                <FormTemplate clientsPair="clientsPair"
+                              templateType="templateType"
+                              calculationType="calculationType"
+                              allowAttachment="allowAttachment"
+                              feedbackType="feedbackType"
+                              OnTemplateCreated="OnTemplateCreated" />
+            </Drawer>
+        </div>
+    }
 }
-
 
 
 @* Injects *@
 @inject IApiMethods ApiMethods
 @inject ApiMiddleware ApiMiddleware
-@inject IJSRuntime jsRuntime
 @inject IMessageService _message
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<QualityExperienceUI.Local.TemplatesResources.Templates> localizer;
+
 
 @code {
-    // Table vars
-    private TagColor color;
-    ITable _table;
+    // General vars
+    private bool isReady = false;
 
-    // Filter
-    readonly StringFieldFilterType simpleStringFilter = new() { SupportedCompareOperators = new[] { TableFilterCompareOperator.Contains, TableFilterCompareOperator.NotEquals} };
-
-
-    // Para manejar Tooltips
-    private TableLocale _tableLocale = new TableLocale();
-
-    // Vars for filter and selects
-    private bool restFilters = false;
-    private int id;
-    private int? status, type;
-    private string? authorID, startDate, endDate;
-
+    // Vars send by parameters
     Dictionary<string, int> clientsPair = new();
     private List<NameValuePair> templateState = new ();
     private List<NameValuePair> templateType = new ();
+
+    // Parameters for create New templates
     private List<NameValuePair> calculationType = new();
     private List<NameValuePair> allowAttachment = new();
     private List<NameValuePair> feedbackType = new();
@@ -202,7 +64,6 @@ Style="width: 200px">
     TemplateListDto? sendTemplateToUpdate = null;
 
 
-
     // Initialize all necesaries
     protected override async Task OnInitializedAsync()
     {
@@ -210,17 +71,17 @@ Style="width: 200px">
         {
             // Obtain all values
             var responseClients = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetClientsAsync());
-            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+            var responseTemplate = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
             var templateOptions = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplateOptionsAsync());
 
-            if (!response.IsSuccess)
+            if (!responseTemplate.IsSuccess)
             {
-                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+                _message.Error($"Error en la respuesta:\n {responseTemplate.ErrorMessage}");
             }
             else
             {
 
-                templates = response.Data;
+                templates = responseTemplate.Data;
                 // Charge Dictionary with clients values and names
                 foreach (var client in responseClients.Data)
                 {
@@ -231,20 +92,8 @@ Style="width: 200px">
                 calculationType = templateOptions.Data.CalculationType;
                 allowAttachment = templateOptions.Data.AllowAttachment;
                 feedbackType = templateOptions.Data.FeedbackType;
-
-
-                // Initialize tableLocale after obtaining localizer
-                _tableLocale = new TableLocale
-                    {
-                        // para ordenar ascentende
-                        TriggerAsc = localizer["TableLocaleTriggerAsc"].Value,
-                        // para ordenar Desendente
-                        TriggerDesc = localizer["TableLocaleTriggerDesc"].Value,
-                        // para limpiar orden
-                        CancelSort = localizer["TableLocaleCancelSort"].Value,
-                    };
             }
-
+            isReady = true;
         }
         catch (Exception ex)
         {
@@ -252,96 +101,28 @@ Style="width: 200px">
         }
     }
 
-
-
-    //Table controls
-    private void EditRow(TemplateListDto row)
-    {
-        sendTemplateToUpdate = row;
-        visibleEdit = true;
-    }
-    private async Task DeleteRow(TemplateListDto row)
-    {
-        bool confirmDelete = await Confirm($"Are you sure you want to delete {row.Name}?");
-        if (confirmDelete)
-        {
-            var response = ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.DeleteTemplate(row.Id));
-            templates = templates.Where(t => t.Id != row.Id).ToList(); // Actualiza la lista eliminando la fila
-            _table.ReloadData();
-        }
-    }
-    private async Task SoftDeleteRow(TemplateListDto row)
-    {
-        bool confirmDelete = await Confirm($"Are you sure you want to delete {row.Name}?");
-
-        if (confirmDelete)
-        {
-            var response = ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.SoftDeleteTemplate(row.Id));
-            templates = templates.Where(t => t.Id != row.Id).ToList(); // Actualiza la lista eliminando la fila
-            _table.ReloadData();
-        }
-    }
-    // Método para confirmar una acción
-    private async Task<bool> Confirm(string message)
-    {
-        return await jsRuntime.InvokeAsync<bool>("confirm", message);
-    }
-
-
-
-    // Controls -> buttons and selects
-    private async Task ClientsSelectorChange(int item)
-    {
-        // for hide filter
-        if(item == null)
-        {
-            restFilters = false;
-        }
-        else
-        {
-            restFilters = true;
-            id = item;
-
-            var templateOptions = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplateOptionsAsync());
-
-            if (!templateOptions.IsSuccess)
-            {
-                _message.Error($"Error en la respuesta:\n {templateOptions.ErrorMessage}");
-            }
-            else
-            {
-                templateState = templateOptions.Data.TemplateStatus;
-                templateType = templateOptions.Data.TemplateType;
-                calculationType = templateOptions.Data.CalculationType;
-                allowAttachment = templateOptions.Data.AllowAttachment;
-                feedbackType = templateOptions.Data.FeedbackType;
-            }
-        }
-    }
-    private async Task SelectStatusChange(int item){
-        status = item;
-    }
-    private async Task SelectTypeChange(int item)
-    {
-        type = item;
-    }
-
-    private async Task SearchButton()
+    // Filter Controls
+    private async Task HandleSearchFilterButton((int id, string? status, string? type, string? authorID, DateTime? startDate, DateTime? endDate) filterValues)
     {
         try
         {
-            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesByFiltersAsync(id, status.ToString(), type.ToString(), authorID, startDate, endDate));
-            if (!response.IsSuccess)
+            int id = filterValues.id;
+            string? status = filterValues.status;
+            string? type = filterValues.type;
+            string? authorID = filterValues.authorID;
+            DateTime? startDate = filterValues.startDate;
+            DateTime? endDate = filterValues.endDate;
+
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesByFiltersAsync(id, status, type, authorID, startDate, endDate));
+            if (!response.IsSuccess || response.Data == null)
             {
-                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
-                templates = null;
+                var message = response.ErrorMessage != null ? response.ErrorMessage : localizer["NoTemplatesfound"];
+                _message.Error($"Error en la respuesta:\n {message}");
             }
             else
             {
                 templates = response.Data;
             }
-            _table.ReloadData();
-
         }
         catch (Exception ex)
         {
@@ -349,12 +130,26 @@ Style="width: 200px">
         }
     }
 
-    private async Task ClearButton()
+    private async Task HandleClearFilterButton()
     {
-        status = null;
-        type = null;
-        id = 0;
-        await clearTask();
+        try
+        {
+            // reload templates
+            var responseTemplate = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+            if (!responseTemplate.IsSuccess)
+            {
+                _message.Error($"Error en la respuesta:\n {responseTemplate.ErrorMessage}");
+            }
+            else
+            {
+
+                templates = responseTemplate.Data;
+            }
+        } 
+        catch (Exception ex)
+        {
+            _message.Error($"Exepcion:\n {ex.Message}");
+        }
     }
 
 
@@ -369,7 +164,7 @@ Style="width: 200px">
     {
         visible = false;
         visibleEdit = false;
-        clearTask();
+        // clearTask();
     }
 
     // Events and clear
@@ -388,7 +183,6 @@ Style="width: 200px">
         try
         {
             this.visible = false;
-            restFilters = false;
             // templates = null;
 
             var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
@@ -401,7 +195,6 @@ Style="width: 200px">
             {
                 templates = response.Data;
             }
-            _table.ReloadData();
 
         }
         catch(Exception ex)

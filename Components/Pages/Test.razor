@@ -11,6 +11,8 @@
 <InputFile OnChange="@LoadFile" accept=".csv,.xlsx" />
 
 @code {
+    int maxFileds = 1500;
+
     // Input
     private async Task LoadFile(InputFileChangeEventArgs e)
     {
@@ -70,9 +72,24 @@
 
         return JsonSerializer.Serialize(records);
     }
+    // private async Task LoadCsvFile(InputFileChangeEventArgs e)
+    // {
+    //     var file = e.File;
+    //     using var stream = file.OpenReadStream();
+    //     using var reader = new StreamReader(stream);
+    //     using var csv = new CsvReader(reader, CultureInfo.InvariantCulture);
+
+    //     var records = csv.GetRecords<MyModel>().ToList();
+    //     var json = JsonSerializer.Serialize(records);
+
+    //     //Enviar al backend
+    //     await HttpClient.PostAsJsonAsync("api/data", json);
+    // }
 
     public async Task<List<CreateGroupDTO>> ConvertCsvToGroupDTO(IBrowserFile file)
     {
+        int filds = 0;
+
         using var stream = file.OpenReadStream();
         using var reader = new StreamReader(stream);
 
@@ -105,13 +122,21 @@
                         authorID = csv.GetField<int>("authorID")
                     };
 
-                records.Add(dto);
+                records.Add(dto); 
+
+                if (filds == maxFileds)
+                {
+                    throw new Exception("El archivo excede la cantidad maxima de campos.");
+                }
+                filds++;
             }
             catch (Exception ex)
             {
                 await JsRuntime.InvokeVoidAsync("console.error",
                     $"Error en fila {csv.Parser.Row}: {ex.Message}");
             }
+
+            
         }
         return records;
     }

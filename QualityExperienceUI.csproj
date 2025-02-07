@@ -58,6 +58,7 @@
 
   <ItemGroup>
     <Folder Include="Components\Pages\NewFolder\" />
+    <Folder Include="Local\TemplatesResources\TemplatesDetails\" />
   </ItemGroup>
 
 </Project>

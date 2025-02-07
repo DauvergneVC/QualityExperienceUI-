@@ -1,0 +1,97 @@
+﻿@* Usings *@
+@using AntDesign.Filters
+@using QualityExperienceUI.Data.Models
+
+
+@* Component Content *@
+<h3>@localizer["TableTitle"]</h3>
+
+<Table @ref="_table" PageSize="5" DataSource="@(templates != null ? templates: new List<TemplateListDto>())" Size="TableSize.Middle" Bordered="false" RowExpandable="@(record=> true)" Locale="_tableLocale">
+    <ColumnDefinitions>
+        <PropertyColumn Property="c=>c.Name"
+        Title="@localizer["TableColumnName"]"
+        SorterCompare="@((a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase))"
+        SortDirections="new[] { SortDirection.Ascending, SortDirection.Descending }"
+        Filterable FieldFilterType="simpleStringFilter" />
+        <PropertyColumn Property="c=>c.Description"
+        Title="@localizer["TableColumnDescription"]" />
+        <PropertyColumn Property="c=>c.Status"
+        Title="@localizer["TableColumnStatus"]">
+            @if (context.Status == "Inactive")
+            {
+                color = TagColor.Volcano;
+            }
+            else
+            {
+                color = context.Status == "Draft" ? TagColor.GeekBlue : TagColor.Green;
+            }
+            <Tag Color="@color">@context.Status</Tag>
+        </PropertyColumn>
+        <ActionColumn Title="@localizer["TableColumnEdit"]">
+            <CellRender Context="cellData">
+                <a style="margin-left: 10px,color: blue;" @onclick="()=> NavigateToEvaluaciones(context.Id)">@localizer["TableViewButton"]</a>
+            </CellRender>
+        </ActionColumn>
+    </ColumnDefinitions>
+    <ExpandTemplate>
+        <p>@localizer["TableExpandID"]: @context.Data.Id</p>
+        <p>@localizer["TableExpandAuthorID"]: @context.Data.AuthorID</p>
+        <p>@localizer["TableExpandClientID"]: @context.Data.ClientID</p>
+        <p>@localizer["TableExpandIsArchived"] : @context.Data.Archived</p>
+        <p>@localizer["TableExpandCalculationType"]: @context.Data.CalculationType</p>
+        <p>@localizer["TableExpandAllowAttachment"]: @context.Data.AllowAttachment</p>
+        <p>@localizer["TableExpandFeedbackType"]: @context.Data.FeedbackType</p>
+        <p>@localizer["TableExpandTemplateType"]: @context.Data.TemplateType</p>
+        @* DateTimes with format from resourcefile *@
+        <p>@localizer["TemplateExpandCreatedAt"]: @(context.Data.CreatedAt?.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+        <p>@localizer["TemplateExpandUpdatedAt"]: @(context.Data.UpdatedAt?.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+    </ExpandTemplate>
+
+</Table>
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.TemplatesResources.Templates> localizer;
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+
+
+@code {
+
+    // Parameters
+    [Parameter]
+    public IEnumerable<TemplateListDto>? templates { get; set; }
+    // Vars
+    private TagColor color;
+    ITable _table;
+    TemplateListDto? sendTemplateToUpdate = null;
+    private TableLocale _tableLocale = new TableLocale();
+    string dateFormat;
+    // Filter
+    readonly StringFieldFilterType simpleStringFilter = new() { SupportedCompareOperators = new[] { TableFilterCompareOperator.Contains, TableFilterCompareOperator.NotEquals } };
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize tableLocale after obtaining localizer
+        _tableLocale = new TableLocale
+            {
+                // para ordenar ascentende
+                TriggerAsc = localizer["TableLocaleTriggerAsc"].Value,
+                // para ordenar Desendente
+                TriggerDesc = localizer["TableLocaleTriggerDesc"].Value,
+                // para limpiar orden
+                CancelSort = localizer["TableLocaleCancelSort"].Value,
+            };
+
+        // Inizialide DateFormat
+        dateFormat = localizer["DateTimeFormater"].Value;
+    }
+     
+    private void NavigateToEvaluaciones(int templateID)
+    {
+        NavigationManager.NavigateTo($"/templates/details/{templateID}");
+    }
+}

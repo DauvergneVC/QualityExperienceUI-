@@ -1,0 +1,69 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Data.Models
+
+
+@* Component content *@
+<h3 style ="display: flex; justify-content: center">Services</h3>
+
+<div style="display: flex; justify-content: center">
+    <Transfer 
+    DataSource="_dataSource"
+    Disabled="_disabled"
+    TargetKeys="_targetKeys"
+    SelectedKeys="_selectedKeys"
+    Titles="_titles"
+    OnChange="OnChange"
+    OnSelectChange="OnSelectChange">
+    </Transfer>
+</div>
+
+
+@* Injects *@
+@inject IJSRuntime JsRuntime
+
+@code {
+    [Parameter]
+    public IEnumerable<ServiceListDTO>? Services { get; set; }
+
+    private List<TransferItem>? _dataSource;
+    private List<string> _targetKeys = new List<string>();
+
+    private List<string> _selectedKeys = new List<string>();
+    private string[] _titles = { "Source", "Target" };
+    private bool _disabled = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _dataSource = new List<TransferItem>();
+
+        foreach (var service in Services)
+        {
+            _dataSource.Add(new TransferItem
+            {
+                Key = service.id.ToString(),
+                Title = service.name,
+                Description = service.description,
+                Disabled = false,
+            });
+        }
+    }
+
+
+    private OneOf.OneOf<string, RenderFragment> Render(TransferItem item)
+    {
+        return $"{item.Title} - {item.Description}";
+    }
+
+    private void OnChange(TransferChangeArgs e)
+    {
+        Console.WriteLine(e.Direction);
+        Console.WriteLine($"MoveKeys:{string.Join(',', e.MoveKeys)}");
+        Console.WriteLine($"TargetKeys:{string.Join(',', e.TargetKeys)}");
+    }
+
+    private void OnSelectChange(TransferSelectChangeArgs e)
+    {
+        Console.WriteLine($"SourceSelectedKeys:{string.Join(',', e.SourceSelectedKeys)}");
+        Console.WriteLine($"TargetSelectedKeys:{string.Join(',', e.TargetSelectedKeys)}");
+    }
+}

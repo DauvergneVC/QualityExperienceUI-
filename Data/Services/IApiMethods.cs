@@ -15,14 +15,17 @@ namespace QualityExperienceUI.Data.Services
         [Get("/api/templates")]
         Task<ApiResponse<IEnumerable<TemplateListDto>>> GetTemplatesAsync();
 
+        [Get("/api/templates/{id}")]
+        Task<ApiResponse<TemplateListByIDDto>> GetTemplatesByIDAsync(int id);
+
         [Get("/api/templates/by-filters")]
         Task<ApiResponse<IEnumerable<TemplateListDto>>> GetTemplatesByFiltersAsync(
             [AliasAs("clientID")] int clientID,
             [AliasAs("status")] string? status,
             [AliasAs("type")] string? type,
             [AliasAs("authorID")] string? authorID,
-            [AliasAs("startDate")] string? startDate,
-            [AliasAs("endDate")] string? endDate
+            [AliasAs("startDate")] DateTime? startDate,
+            [AliasAs("endDate")] DateTime? endDate
         );
 
         [Get("/api/templates/metadata")]
@@ -46,11 +49,14 @@ namespace QualityExperienceUI.Data.Services
 
 
         // Services
+        [Get("/api/services")]
+        Task<ApiResponse<IEnumerable<ServiceListDTO>>> GetServicesAsync();
+
         [Get("/api/servicecategories")]
         Task<ApiResponse<IEnumerable<CategoriesListDTO>>> GetServicesCategories();
 
         [Get("/api/services-by-category/{id}")]
-        Task<ApiResponse<IEnumerable<ServiceListDTO>>> GetServicesByCategory(int id);
+        Task<ApiResponse<IEnumerable<ServiceByCategorieListDTO>>> GetServicesByCategory(int id);
 
 
 

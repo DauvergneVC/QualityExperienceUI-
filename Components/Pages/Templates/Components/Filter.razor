@@ -1,0 +1,151 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Data.Models
+
+
+@* Component content *@
+<h3>@localizer["FilterTitle"]</h3>
+
+<Select DataSource="@clientsPair.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="@localizer["SelectClient"]"
+OnSelectedItemChanged="@(item =>ClientsSelectorChange(item))"
+Style="width: 200px">
+
+    <SelectOptions>
+        @foreach (var valor in clientsPair)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Key" />
+        }
+    </SelectOptions>
+</Select>
+@if (restFilters)
+{
+    @* Template status *@
+    <Select TItemValue="int"
+    TItem="int"
+    EnableSearch
+    Placeholder="@localizer["SelectStatePlaceHolder"]"
+    OnSelectedItemChanged="@(item =>SelectStatusChange(item))"
+    Style="width: 200px">
+
+        <SelectOptions>
+            @foreach (var valor in templateState)
+            {
+                <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Name" />
+            }
+        </SelectOptions>
+    </Select>
+
+    @* Template type *@
+    <Select TItemValue="int"
+    TItem="int"
+    EnableSearch
+    Placeholder="@localizer["SelectTypePlaceholder"]"
+    OnSelectedItemChanged="@(item =>SelectTypeChange(item))"
+    Style="width: 200px">
+
+        <SelectOptions>
+            @foreach (var valor in templateType)
+            {
+                <SelectOption TItemValue="int" TItem="int" Value="@valor.Value" Label="@valor.Name" />
+            }
+        </SelectOptions>
+    </Select>
+
+    @* Author ID *@
+    <Input Placeholder="@localizer["InputAuthorIDPlaceholder"]" @bind-Value="authorID" Style="width: 200px" />
+
+    @* Date range *@
+    <br/>
+    <p>Rango de fechas</p>
+    <DatePicker TValue="DateTime?" Picker="DatePickerType.Date" @bind-Value="startDate"/>
+    <DatePicker TValue="DateTime?" Picker="DatePickerType.Date" @bind-Value="endDate" />
+    <br />
+
+
+    @* Buttons *@
+    <Button @onclick="_=>SearchButton()">@localizer["SearchButtonFilter"]</Button> 
+    <Button @onclick="_=>ClearButton()">@localizer["ClearButtonFilter"]</Button>
+}
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.TemplatesResources.Templates> localizer;
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IJSRuntime jsRuntime
+@inject IMessageService _message
+@inject NavigationManager NavigationManager
+
+
+@code {
+    // Parameters
+    [Parameter] public Dictionary<string, int>? clientsPair { get; set; }
+    [Parameter] public List<NameValuePair>? templateState { get; set; }
+    [Parameter] public List<NameValuePair>? templateType { get; set; }
+
+    [Parameter]
+    public EventCallback<(int, string, string, string, DateTime?, DateTime?)> FilterValuesSearchExecute { get; set; }
+    [Parameter]
+    public EventCallback ClearTask { get; set; }
+    // Vars
+    private bool restFilters = false;
+    private int id;
+    private int? status, type;
+    private string? authorID;
+    DateTime? startDate, endDate;
+
+
+    // Controls -> buttons and selects
+    private async Task ClientsSelectorChange(int item)
+    {
+        // for hide filter
+        if (item == null)
+        {
+            restFilters = false;
+        }
+        else
+        {
+            restFilters = true;
+            id = item;
+        }
+    }
+    private async Task SelectStatusChange(int item)
+    {
+        status = item;
+    }
+    private async Task SelectTypeChange(int item)
+    {
+        type = item;
+    }
+
+
+    // Buttons
+    private async Task SearchButton()
+    {
+        var filterValues = (id, status?.ToString(), type?.ToString(), authorID, startDate, endDate);
+        await FilterValuesSearchExecute.InvokeAsync(filterValues);
+    }
+
+    private async Task ClearButton()
+    {
+        restFilters = false;
+        var temporalClientsSave = clientsPair;
+        clientsPair = null;
+        var temporalStateSave = templateState;
+        templateState = null;
+        var temporalTypeSave = templateType;
+        templateType = null;
+
+        startDate = null;
+        endDate = null;
+
+        await ClearTask.InvokeAsync();
+
+        clientsPair = temporalClientsSave;
+        templateState = temporalStateSave;
+        templateType = temporalTypeSave;
+    }
+}

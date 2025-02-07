@@ -21,6 +21,23 @@ namespace QualityExperienceUI.Data.Models
 
 
     }
+    public class TemplateListByIDDto
+    {
+        public int Id { get; set; }
+        public string? name { get; set; }
+        public string? description { get; set; }
+        public object? AuthorID { get; set; }
+        public string? Status { get; set; }
+        public string? CalculationType { get; set; }
+        public string? AllowAttachment { get; set; }
+        public string? FeedbackType { get; set; }
+        public string? TemplateType { get; set; }
+
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+
+
+    }
 
     public class TemplateCreateDto
     {
@@ -39,8 +56,8 @@ namespace QualityExperienceUI.Data.Models
 
     public class TemplateUpdateDTO
     {
-        public string name { get; set; }
-        public string description { get; set; }
+        public string? name { get; set; }
+        public string? description { get; set; }
         public int status { get; set; }
         public int calculationType { get; set; }
         public int allowAttachment { get; set; }

@@ -1,0 +1,223 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.Templates.TemplateDetails.Components
+@using QualityExperienceUI.Data.Models
+
+
+@* Page content *@
+@page "/templates/details/{templateID:int}"
+
+@if (isReady)
+{
+    @* Template infor & edit *@
+    <TemplateInfoAndEdit templateList="template"
+    templateState="templateState"
+    templateType="templateType"
+    calculationType="calculationType"
+    allowAttachment="allowAttachment"
+    feedbackType="feedbackType" 
+    UpdateTemplate="HandleUpdateTemplateFromTemplateInfoAndEdit"/>
+
+    <Divider />
+
+    @* Tabs *@
+    <Tabs DefaultActiveKey="1">
+
+        <TabPane Key="1" Tab="Services & Campos">
+            <br />
+            <br />
+            <TransferServices services="services" />
+
+            <Divider/>
+
+            <AvailableFieldsComponent />
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="2" Tab="Questions">
+            <br />
+            <br />
+            <Questions />
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="3" Tab="Groups">
+            <br />
+            <br />
+            <Groups />
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="4" Tab="ComboBox">
+            <br />
+            <br />
+            ComboBox
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="5" Tab="Note calculation">
+            <br />
+            <br />
+            <CalculationNoteComponent />
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="6" Tab="Asigned users">
+            <br />
+            <br />
+            <AsignedUsersComponent />
+            <br />
+            <br />
+        </TabPane>
+
+        <TabPane Key="7" Tab="Maqueta">
+            <br />
+            <br />
+            <Maqueta templateID="templateID" />
+            <br />
+            <br />
+        </TabPane>
+    </Tabs>
+
+    <Divider />
+
+    @* Delete buttons *@
+    <Popconfirm Title="Are you sure delete this task?"
+    OnConfirm="()=> SoftDelete()"
+    OkText="Yes"
+    CancelText="No">
+        <a style="margin-left: 10px,color: blue;">SoftDelete</a>
+    </Popconfirm>
+
+    <br />
+
+    <Popconfirm Title="Are you sure delete this task?"
+    OnConfirm="()=> Delete()"
+    OkText="Yes"
+    CancelText="No">
+        <a style="margin-left: 10px,color: blue;">RealDelete</a>
+    </Popconfirm>
+}
+
+
+@* Injects *@
+@inject IMessageService _message
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject ModalService _modalService
+@*To reload page*@
+@inject NavigationManager uriHelper; 
+
+@code {
+    [Parameter]
+    public int templateID { get; set; }
+
+    // Vars send by paramters
+    private bool isReady = false;
+
+    TemplateListByIDDto template = new();
+    private List<NameValuePair> templateState = new();
+    private List<NameValuePair> templateType = new();
+    private List<NameValuePair> calculationType = new();
+    private List<NameValuePair> allowAttachment = new();
+    private List<NameValuePair> feedbackType = new();
+    IEnumerable<ServiceListDTO>? services = new List<ServiceListDTO>();
+
+    // Vars
+    private static bool modalConfirm = false;
+
+    protected override async Task OnInitializedAsync()
+    { 
+        try
+        {
+            var templateResponce = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesByIDAsync(templateID));
+            var templateOptions = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplateOptionsAsync());
+            var servicesResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesAsync());
+
+            if (!templateOptions.IsSuccess || !templateResponce.IsSuccess)
+            {
+                var Message = templateOptions.ErrorMessage != null ? templateOptions.ErrorMessage : templateResponce.ErrorMessage;
+                _message.Error($"Error en la respuesta:\n {Message}");
+            }
+            else
+            {
+                template = templateResponce.Data;
+                templateState = templateOptions.Data.TemplateStatus;
+                templateType = templateOptions.Data.TemplateType;
+                calculationType = templateOptions.Data.CalculationType;
+                allowAttachment = templateOptions.Data.AllowAttachment;
+                feedbackType = templateOptions.Data.FeedbackType;
+
+                services = servicesResponse.Data;
+            }
+            isReady = true;
+
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    //Button Delete controls
+    private async Task SoftDelete()
+    {
+        _modalService.Confirm(new ConfirmOptions()
+            {
+                Title = "Do you Want sure to delete these items?",
+                Content = "Some descriptions",
+                OnOk = onOk,
+                OnCancel = onCancel
+            });
+        var response = ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.SoftDeleteTemplate(templateID));
+    }
+    private async Task Delete()
+    {
+        _modalService.Confirm(new ConfirmOptions()
+            {
+                Title = "Do you Want to delete these items?",
+                Content = "Some descriptions",
+                OnOk = onOk,
+                OnCancel = onCancel
+            });
+        var response = ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.DeleteTemplate(templateID));
+    }
+    // Confirm modals
+    Func<ModalClosingEventArgs, Task> onOk = (e) =>
+    {
+        modalConfirm = true;
+        return Task.CompletedTask;
+    };
+    Func<ModalClosingEventArgs, Task> onCancel = (e) =>
+    {
+
+        return Task.CompletedTask;
+    };
+
+
+    // Handle components funcions
+    private async Task HandleUpdateTemplateFromTemplateInfoAndEdit(TemplateUpdateDTO modelUpdate)
+    {
+        try
+        {
+            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateTemplateAsync(templateID, modelUpdate));
+            if (!response.IsSuccess)
+            {;
+                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+            }
+            else
+            {
+                uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true);
+            }
+
+        }
+        catch (Exception ex)
+        {
+            _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+}
