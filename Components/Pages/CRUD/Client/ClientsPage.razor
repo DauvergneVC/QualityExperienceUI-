@@ -1,0 +1,162 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.CRUD.Client.Components;
+
+
+@page "/clients"
+@attribute [ReuseTabsPage(Title = "Clients")]
+
+
+@*Page Content*@
+@if (isReady)
+{
+    <Divider/>
+    <h2>@localizer["PageTitle"]</h2>
+
+    @* Drawer to create a new client *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>createVisible=true">@localizer["PageDrawerCreateClientButton"]</Button>
+    @if (createVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="createVisible" Title="@(localizer["ComponentFormCreateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <CreateClientComponent 
+                localizer="localizer"
+                _message="_message"
+                CreateClient="OnClientCreated"
+                CancelClientCreation="OnCloseDawer" />
+            </Drawer>
+        </div>
+    }
+    @* Drawer to update a client *@
+    @if(updateVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="updateVisible" Title="@(localizer["ComponentFormCreateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <UpdateClientComponent
+                localizer="localizer"
+                client="clientToUpdate"
+                UpdateClient="OnClientUpdated"
+                CancelClientUpdate="OnCloseDawer" />
+            </Drawer>
+        </div>
+    }
+
+
+    <Divider />
+    @* Table to list clients *@
+    <ClientsTableComponent 
+    localizer="localizer"
+    clients="clients"
+    OpenEdit="OpenEdit" />
+
+    <Divider />
+}
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.ClientResources.ClientsPages> localizer;
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+
+@code {
+    // Vars
+    private bool isReady = false;
+    private bool createVisible = false;
+    private bool updateVisible = false;
+    private int templateToUpdateID;
+    // To send by paramters
+    private IEnumerable<ClientListDTO>? clients;
+    private GetClientByIdDTO? clientToUpdate;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+
+        // Request to Back
+        await ClientsResponse();
+
+        // All ready
+        isReady = true;
+    }
+
+    // Requests to Back
+    // Get all clients
+    private async Task ClientsResponse()
+    {
+        var responseClients = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetClientsAsync());
+        if (!responseClients.IsSuccess || responseClients.Data == null)
+        {
+            var Message = responseClients.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            clients = responseClients.Data;
+        }
+    }
+    // Get client by ID
+    private async Task ClientByIDResponse(int id)
+    {
+        var responseClient = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetClientByIdAsync(id));
+        if (!responseClient.IsSuccess || responseClient.Data == null)
+        {
+            var Message = responseClient.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            clientToUpdate = responseClient.Data;
+        }
+    }
+    // Create a new client
+    private async Task CreateClient(PostClientDTO clientToCreate)
+    {
+        var CreateClientResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateClientAsync(clientToCreate));
+        if (!CreateClientResponse.IsSuccess)
+        {
+            await _message.Error(CreateClientResponse.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageClientCreated"].Value);
+        }
+    }
+    // Update a client
+    private async Task UpdateClient(PutClientDTO client)
+    {
+        var UpdateClientResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateClientAsync(templateToUpdateID, client));
+        if (!UpdateClientResponse.IsSuccess)
+        {
+            await _message.Error(UpdateClientResponse.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageClientUpdated"].Value);
+        }
+    }
+
+
+    // Handle components methods
+    private async Task OnClientCreated(PostClientDTO clientToCreate)
+    {
+        await CreateClient(clientToCreate);
+    }
+    private async Task OnCloseDawer()
+    {
+        createVisible = false;
+        updateVisible = false;
+        await ClientsResponse();
+    }
+    private async Task OpenEdit(int id)
+    {
+        templateToUpdateID = id;
+        await ClientByIDResponse(id);
+        updateVisible = true;
+    }
+    private async Task OnClientUpdated(PutClientDTO clientToUpdate)
+    {
+        await UpdateClient(clientToUpdate);
+    }
+}

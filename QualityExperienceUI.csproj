@@ -20,15 +20,35 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resource.resx</DependentUpon>
     </Compile>
+    <Compile Update="Local\ClientResources\ClientsPages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ClientsPages.resx</DependentUpon>
+    </Compile>
     <Compile Update="Local\Data\ToolTips\Tooltips.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Tooltips.resx</DependentUpon>
     </Compile>
+    <Compile Update="Local\GroupsResources\GroupsPages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>GroupsPages.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\IndicatorsResources\IndicatorsPage.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>IndicatorsPage.resx</DependentUpon>
+    </Compile>
     <Compile Update="Local\Resource.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Resource.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\ServicesResources\ServicesPages.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>ServicesPages.resx</DependentUpon>
     </Compile>
     <Compile Update="Local\TemplatesResources\Templates.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -42,13 +62,29 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resource.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Update="Local\ClientResources\ClientsPages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ClientsPages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Local\Data\ToolTips\Tooltips.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Tooltips.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Update="Local\GroupsResources\GroupsPages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>GroupsPages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\IndicatorsResources\IndicatorsPage.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>IndicatorsPage.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Update="Local\Resource.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\ServicesResources\ServicesPages.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>ServicesPages.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Update="Local\TemplatesResources\Templates.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
@@ -57,7 +93,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Components\Pages\NewFolder\" />
     <Folder Include="Local\TemplatesResources\TemplatesDetails\" />
   </ItemGroup>
 

@@ -1,0 +1,104 @@
+﻿
+@* Component Content *@
+<h3>@localizer["ComponentFormCreateTitle"]</h3>
+
+@* Form *@
+<Form @ref="form"
+      Model="@formModel"
+      ValidateOnChange="true"
+      Size="FormSize.Small">
+
+    @* Inputs and Selects *@
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelType"]" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelType"]"
+                Value="@formModel.type"
+                ValueChanged="value => { formModel.type = value; }"
+                ValueExpression="@(() => formModel.type)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="@("0")">
+            <SelectOptions>
+                <SelectOption TItemValue="string" TItem="string" Value="@("Type1")" Label="@("Type1")" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Type2")" Label="@("Type2")" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("Type3")" Label="@("Type3")" />
+
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelForCalculation"]" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelForCalculation"]"
+                Value="@formModel.forCalculation"
+                ValueChanged="value => { formModel.forCalculation = value; }"
+                ValueExpression="@(() => formModel.forCalculation)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="@("0")">
+            <SelectOptions>
+                <SelectOption TItemValue="string" TItem="string" Value="@("Yes")" Label="@("Yes")" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("No")" Label="@("No")" />
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>CreateButtonAction()">
+            @localizer["ComponentFormButtonCreate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+
+</Form>
+
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public IMessageService? _message { get; set; }
+
+    [Parameter] public EventCallback<PostIndicatorDTO> Create { get; set; }
+    [Parameter] public EventCallback CancelCreation { get; set; }
+    // Form
+    private PostIndicatorDTO formModel { get; set; } = new PostIndicatorDTO();
+    private Form<PostIndicatorDTO>? form; // Para manejar el form y poder limpiarlo.
+
+
+    // Buttons action
+    private async Task CreateButtonAction()
+    {
+        if (!form.Validate())
+        {
+            await _message.Warning("Form no validado");
+        }
+        else
+        {
+            await Create.InvokeAsync(formModel);
+            form.Reset();
+        }
+    }
+
+    private async Task CancelButtonAction()
+    {
+        form.Reset();
+        await CancelCreation.InvokeAsync();
+    }
+}

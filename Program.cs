@@ -1,5 +1,6 @@
 using QualityExperienceUI.Components;
 using QualityExperienceUI.Data.Services;
+using QualityExperienceUI.Data.Services.CRUD;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,10 @@ builder.Services.AddRefitClient<IApiMethods>()
 ;
 // Middleware
 builder.Services.AddScoped<ApiMiddleware>();
+// Inizialices CRUDs 
+builder.Services.AddScoped<IServiceCRUD, ServicesCRUD>();
+builder.Services.AddScoped<IContextFieldCRUD, ContextFieldCRUD>();
+builder.Services.AddScoped<IQuestionsCRUD, QuestionsCRUD>();
 
 
 var app = builder.Build();

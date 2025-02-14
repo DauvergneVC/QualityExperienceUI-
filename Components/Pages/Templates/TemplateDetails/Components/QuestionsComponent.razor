@@ -1,0 +1,66 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.Templates.TemplateDetails.Components.SubComponents
+
+@* Component Content *@
+<AntList DataSource="questions" Bordered ItemLayout="@ListItemLayout.Horizontal">
+    <ChildContent Context="item">
+
+        <ListItem Actions="Actions(item)" >
+                <ListItemMeta Description="@($"| Code: {item.id} | Status: {item.status} | Description: {item.description}")">
+                    <TitleTemplate> 
+                        @item.name
+                    </TitleTemplate>
+                </ListItemMeta>
+
+            @* Question Evaluation control *@
+            <label>Evaluation Control: </label>
+            <QuestionEvaluationControlComponent questionEvaluationControl="@item.questionEvaluationControl" />
+        </ListItem>
+
+        <ListItem >
+            <div style="display: flex; text-align: left;">
+            @* Question Items (Validation, ControlType, questionItems) *@
+                <QuestionsItems questionEvaluationControl="@item.questionEvaluationControl"
+                    questionItems="@item.questionItems"/>
+            </div>
+        </ListItem>
+
+        <Divider/>
+    </ChildContent>
+</AntList>
+
+
+@code {
+    // Parameters
+    [Parameter] public List<GetQuestionsByTemplateIdDTO>? allDataOfQuestions { get; set; }
+
+    // Vars
+    /// CAMBIAR DATA.MODEL... CUANDO SE ELIMINE QUESTION ANTERIOR
+    private RenderFragment[] Actions(Data.Models.GetModels.Questions item) => new RenderFragment[] {
+        builder => {
+                builder.OpenElement(0, "a");
+                // builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
+                builder.AddContent(2, "Delete");
+                builder.CloseElement();        }
+    };
+    // Related with allquestionData
+    private List<Data.Models.GetModels.Questions>? questions = new();
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        if(allDataOfQuestions != null)
+        {
+            foreach(var questionInAllData in allDataOfQuestions)
+            {
+                var questionInCicle = questionInAllData.questions;
+                foreach (var question in questionInCicle)
+                {
+                    questions.Add(question);
+                }
+            }
+        }
+    }
+
+}

@@ -1,0 +1,50 @@
+﻿
+<Form @ref="form"
+Model="@formModel"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="description" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+</Form>
+
+
+@inject IJSRuntime JsRuntime
+
+@code
+{
+    // Parameters
+    [Parameter]
+    public int contextFieldTypeID { get; set; }
+
+    // For Form
+    private PostContextFieldValuesDTO formModel { get; set; } = new PostContextFieldValuesDTO();
+    private Form<PostContextFieldValuesDTO>? form;
+
+
+    // methods
+    protected override async Task OnInitializedAsync()
+    {
+        formModel.contextFieldTypeId = contextFieldTypeID;
+    }
+
+
+    public async Task<(bool isValid, PostContextFieldValuesDTO data)> ValidateAndGetData()
+    {
+        if (form != null)
+        {
+            var validateResult = form.Validate();
+            if (validateResult)
+            {
+                return (validateResult, formModel);
+            }
+        }
+        return (false, formModel);
+    }
+}

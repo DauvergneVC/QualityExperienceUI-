@@ -1,0 +1,72 @@
+﻿@* Component content *@
+<h3>@localizer["ComponentFormUpdateTitle"]</h3>
+
+<Form Model="formModel"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+        </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelStatus"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.status" />
+    </FormItem>
+
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>UpdateButtonAction()">
+            @localizer["ComponentFormButtonUpdate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+</Form>
+
+
+@code 
+{
+    // Parameters
+    [Parameter] public GetClientByIdDTO? client { get; set; }
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public EventCallback<PutClientDTO> UpdateClient { get; set; }
+    [Parameter] public EventCallback CancelClientUpdate { get; set; }
+    // Vars
+    private int? clientID;
+    // Form
+    private PutClientDTO formModel { get; set; } = new PutClientDTO();
+    private Form<PostClientDTO>? form; // Para manejar el form
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Charge all dates into model to edit
+        if (client != null)
+        {
+            clientID = client.id;
+
+            formModel.name = client.name;
+            formModel.description = client.description;
+            formModel.status = client.status;
+        }
+    }
+
+
+    // Buttons action
+    private async Task UpdateButtonAction()
+    {
+        await UpdateClient.InvokeAsync(formModel);
+    }
+
+    private async Task CancelButtonAction()
+    {
+        await CancelClientUpdate.InvokeAsync();
+    }
+}

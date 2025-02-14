@@ -1,0 +1,187 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.CRUD.Groups.Components;
+
+
+@page "/groups"
+@attribute [ReuseTabsPage(Title = "Groups")]
+
+
+@*Page Content*@
+@if (isReady)
+{
+    <Divider />
+    <h2>@localizer["PageTitle"]</h2>
+
+
+    @* Drawer to create Group *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>createVisible=true">@localizer["PageDrawerCreateGroupButton"]</Button>
+    @if (createVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="createVisible" Title="@(localizer["ComponentFormCreateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <CreateGroupComponent 
+                localizer="localizer"
+                _message="_message"
+                templatesPair="templatesPair"
+                Create="OnGroupCreated"
+                CancelCreation="OnCloseDawer"/>
+            </Drawer>
+        </div>
+    }
+    @* Drawer to update Group *@
+    @if (editVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="editVisible" Title="@(localizer["ComponentFormUpdateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <UpdateGroupComponent 
+                group="groupToUpdate"
+                localizer="localizer"
+                templatesPair="templatesPair"
+                Update="OnGroupUpdated"
+                CancelUpdate="OnCloseDawer"/>
+            </Drawer>
+        </div>
+    }
+
+
+    <Divider />
+    @* List Groups *@
+    <GroupsListComponent 
+    localizer="localizer"
+    groups="groups" 
+    groupType="groupType"
+    EditGroup="OpenEdit" />
+}
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.GroupsResources.GroupsPages> localizer;
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+
+@code {
+    // Vars
+    private bool isReady = false;
+    private bool createVisible = false;
+    private bool editVisible = false;
+    private GetGroupListDTO groupToUpdate = new();
+    // To send by parameters
+    private List<GetGroupListDTO>? groups;
+    private List<MetadataNameValue> groupType = new();
+    private Dictionary<string, int> templatesPair = new();
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Request to Back
+        await GetGroupsResponse();
+        await GetGroupsMetadata();
+        await GetTemplates();
+
+        // All ready
+        isReady = true;
+    }
+
+    // Requests to Back
+    #region
+    // Get all groups
+    private async Task GetGroupsResponse()
+    {
+        var responseGroups = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetGroupsAsync());
+        if (!responseGroups.IsSuccess || responseGroups.Data == null)
+        {
+            var Message = responseGroups.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            groups = responseGroups.Data;
+        }
+    }
+    // Get groups metadata
+    private async Task GetGroupsMetadata()
+    {
+        var metadataResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetGroupsMetadataAsync());
+        if (!metadataResponse.IsSuccess || metadataResponse.Data == null)
+        {
+            var Message = metadataResponse.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            groupType = metadataResponse.Data.groupType;
+        }
+    }
+    // Get other data
+    private async Task GetTemplates()
+    {
+        var responseTemplates = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesAsync());
+        if (!responseTemplates.IsSuccess || responseTemplates.Data == null)
+        {
+            var Message = responseTemplates.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            // Charge Dictionary with templates values and names
+            foreach (var template in responseTemplates.Data)
+            {
+                templatesPair.Add(template.Name, template.Id);
+            }
+        }
+    }
+
+    // Create a new Group
+    private async Task CreateGroup(CreateGroupDTO group)
+    {
+        var createResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateGroupAsync(group));
+        if (!createResponse.IsSuccess)
+        {
+            await _message.Error(createResponse.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageCreated"].Value);
+        }
+    }
+
+    // Update a group
+    private async Task UpdateGroup(PutGroupDTO group)
+    {
+        var UpdateGroupResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateGroupAsync(groupToUpdate.id, group));
+        if (!UpdateGroupResponse.IsSuccess)
+        {
+            await _message.Error(UpdateGroupResponse.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageUpdatedSuccessfully"].Value);
+        }
+    }
+    # endregion
+
+
+    // Handle components methods
+    private async Task OnGroupCreated(CreateGroupDTO group)
+    {
+        await CreateGroup(group);
+    }
+    private async Task OnCloseDawer()
+    {
+        createVisible = false;
+        editVisible = false;
+        await GetGroupsResponse();
+    }
+    private async Task OpenEdit (GetGroupListDTO group)
+    {
+        groupToUpdate = group;
+        editVisible = true;
+    }
+    private async Task OnGroupUpdated(PutGroupDTO group)
+    {
+        await UpdateGroup(group);
+    }
+}

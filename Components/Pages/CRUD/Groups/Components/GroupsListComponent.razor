@@ -1,0 +1,57 @@
+﻿
+@* Component content *@
+<AntList Bordered DataSource="@(groups?.OrderBy(g => g.order))">
+    <Header>@localizer["ComponentListHeader"]</Header>
+
+    <ChildContent Context="item">
+        <ListItem>
+            <div draggable="true" @ondrop="e=>OnDrop(e, item)" @ondragstart="e=>OnDragStart(e, item)" ondragover="event.preventDefault()">
+                <span>@item.order</span> |
+                <span>@item.name</span> |
+                <span>@item.description</span> |
+                <span><a style="margin-left: 10px" @onclick="_=>EditButton(item)">@localizer["ComponentListEditGroup"]</a></span> |
+            </div>
+        </ListItem>
+    </ChildContent>
+
+    @* <Footer>Footer</Footer> *@
+</AntList>
+
+
+@code 
+{
+    // Paramters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public List<GetGroupListDTO>? groups { get; set; }
+    [Parameter] public List<MetadataNameValue>? groupType { get; set; }
+    [Parameter] public EventCallback<GetGroupListDTO> EditGroup { get; set; }
+
+
+    // Methods
+    private async Task EditButton(GetGroupListDTO group)
+    {
+        await EditGroup.InvokeAsync(group);
+    }
+
+
+    GetGroupListDTO _dragging;
+
+    void OnDrop(DragEventArgs e, GetGroupListDTO s)
+    {
+        if (s != null && _dragging != null && groups != null)
+        {
+            int index = groups.IndexOf(s);
+            groups.Remove(_dragging);
+            groups.Insert(index, _dragging);
+            _dragging = null;
+            StateHasChanged();
+        }
+    }
+
+    void OnDragStart(DragEventArgs e, GetGroupListDTO s)
+    {
+        e.DataTransfer.DropEffect = "move";
+        e.DataTransfer.EffectAllowed = "move";
+        _dragging = s;
+    }
+}

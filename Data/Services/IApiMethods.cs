@@ -1,13 +1,85 @@
 ﻿using Refit;
-using QualityExperienceUI.Data.Models;
+using QualityExperienceUI.Data.Models; //-> Eliminar este luego 
+
+using QualityExperienceUI.Data.Models.GetModels;
+using QualityExperienceUI.Data.Models.PostModels;
+using QualityExperienceUI.Data.Models.PutModels;
+
 
 namespace QualityExperienceUI.Data.Services
 {
+    // EndPoints
     public interface IApiMethods
     {
         // Clients
         [Get("/api/clients")]
         Task<ApiResponse<IEnumerable<ClientListDTO>>> GetClientsAsync();
+
+        [Get("/api/clients/{id}")]
+        Task<ApiResponse<GetClientByIdDTO>> GetClientByIdAsync(int id);
+
+        [Post("/api/clients")]
+        Task<ApiResponse<HttpResponseMessage>> CreateClientAsync([Body] PostClientDTO client);
+
+        [Put("/api/clients/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> UpdateClientAsync(int id, [Body] PutClientDTO client);
+
+
+
+        // Groups
+        [Get("/api/group-metadata")]
+        Task<ApiResponse<GetGroupMetadataDTO>> GetGroupsMetadataAsync();
+
+        [Get("/api/groups")]
+        Task<ApiResponse<List<GetGroupListDTO>>> GetGroupsAsync();
+
+        [Post("/api/groups")]
+        Task<ApiResponse<HttpResponseMessage>> CreateGroupAsync([Body] CreateGroupDTO group);
+
+        [Put("/api/groups/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> UpdateGroupAsync(int id, [Body] PutGroupDTO group);
+
+
+
+        // SERVICES
+        // Get
+        [Get("/api/services")]
+        Task<ApiResponse<List<GetServiceDTO>>> GetServicesAsync();
+
+        [Get("/api/servicecategories")]
+        Task<ApiResponse<List<GetServiceCategoriesDTO>>> GetServicesCategories();
+
+        [Get("/api/services-by-category/{id}")]
+        Task<ApiResponse<List<GetServiceByCategoryDTO>>> GetServicesByCategory(int id);
+
+        // Put
+        [Put("/api/services/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> UpdateServiceAsync(int id, [Body] PutServiceDTO service);
+
+        [Put("/api/servicecategories/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> UpdateServiceCattegory(int id, [Body] PutServiceCategoryDTO category);
+
+        // Post
+        [Post("/api/services")]
+        Task<ApiResponse<HttpResponseMessage>> CreateServiceAsync([Body] PostServicesDTO service);
+
+        [Post("/api/servicecategories")]
+        Task<ApiResponse<HttpResponseMessage>> CreateServiceCategoryAsync([Body] PostServicesCategoriesDTO category);
+
+
+
+        // Indicators
+        [Get("/api/indicators")]
+        Task<ApiResponse<List<GetIndicatorDTO>>> GetIndicatorsAsync();
+
+        [Get("/api/indicators/{id}")]
+        Task<ApiResponse<GetIndicatorDTO>> GetIndicatorByIdAsync(int id);
+
+        [Put("/api/indicators/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> UpdateIndicatorAsync(int id, [Body] PutIndicatorDTO indicator);
+
+        [Post("/api/indicators")]
+        Task<ApiResponse<HttpResponseMessage>> CreateIndicatorAsync([Body] PostIndicatorDTO indicator);
 
 
 
@@ -48,57 +120,30 @@ namespace QualityExperienceUI.Data.Services
 
 
 
-        // Services
-        [Get("/api/services")]
-        Task<ApiResponse<IEnumerable<ServiceListDTO>>> GetServicesAsync();
+        // ContextFields
+        //Get
+        [Get("/api/context-field-types/{id}")]
+        Task<ApiResponse<List<GetContextFieldTypesDTO>>> GetContextFieldTypesByTemplateIdAsync(int id);
 
-        [Get("/api/servicecategories")]
-        Task<ApiResponse<IEnumerable<CategoriesListDTO>>> GetServicesCategories();
+        [Get("/api/context-field-values/{id}")]
+        Task<ApiResponse<List<GetConextxFielValuesdDTO>>> GetContextFieldValuesByContextTypeAsync(int id);
 
-        [Get("/api/services-by-category/{id}")]
-        Task<ApiResponse<IEnumerable<ServiceByCategorieListDTO>>> GetServicesByCategory(int id);
+        // Post
+        [Post("/api/contextFieldTypes")]
+        Task<ApiResponse<HttpResponseMessage>> PostContextFieldTypesAsync([Body] PostContextFieldTypesdDTO contextFieldTypes);
 
+        [Post("/api/contextfieldvalues")]
+        Task<ApiResponse<HttpResponseMessage>> PostContextFieldValuesAsync([Body] PostContextFieldValuesDTO contextFieldValues);
 
-
-        // Indicators
-        [Get("/api/indicators")]
-        Task<ApiResponse<IEnumerable<IndicatorListDTO>>> Getindicators();
+        // Delete
+        [Delete("/api/context-field-value/{id}")]
+        Task<ApiResponse<HttpResponseMessage>> DeleteContextFieldValue(int id);
 
 
 
         // Questions
-        [Get("/api/questions/metadata")]
-        Task<ApiResponse<QuestionsMetadata>> GetQuestionsMetadataAsync();
-
+        // Get
         [Get("/api/templates/{id}/questions")]
-        Task<ApiResponse<IEnumerable<QuestionsListByTemplateDTO>>> GetQuestionsByTemplate(int id);
-
-
-
-        //For TemporalForms
-        [Post("/api/clients")]
-        Task<ApiResponse<HttpResponseMessage>> CreateClient([Body] CreateClientDTO client);
-
-        [Post("/api/groups")]
-        Task<ApiResponse<HttpResponseMessage>> CreateGroups([Body] CreateGroupDTO group);
-
-        [Post("/api/indicators")]
-        Task<ApiResponse<HttpResponseMessage>> Createindicator([Body] CreateIndicatorDTO indicator);
-
-        [Post("/api/questions")]
-        Task<ApiResponse<HttpResponseMessage>> CreateQuestion([Body] CreateQuestionsDTO question);
-
-        [Post("/api/question-items")]
-        Task<ApiResponse<HttpResponseMessage>> CreateQuestionItem([Body] CreateQuestionsItemDTO questionItem);
-
-        [Post("/api/services")]
-        Task<ApiResponse<HttpResponseMessage>> CreateService([Body] CreateServiceDTO service);
-
-        [Post("/api/servicecategories")]
-        Task<ApiResponse<HttpResponseMessage>> CreateServiceCategorie([Body] CreateServiceCategorieDTO serviceCategorie);
-
-
-
-
+        Task <ApiResponse<List<GetQuestionsByTemplateIdDTO>>> GetQuestionsByTemplateIdAsync(int id);
     }
 }

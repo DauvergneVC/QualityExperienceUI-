@@ -2,18 +2,14 @@
     @switch (ControlType)
     {
         case "Text":
-            <label>@Label</label>
-            <Input TValue="string"/>
+            <div style="display:flex;">
+                <Input Placeholder="@Label" TValue="string"/>
+            </div>
             break;
 
         case "Number":
             <label>@Label</label>
             <AntDesign.InputNumber TValue="int" />
-            break;
-
-        case "TextArea":
-            <label>@Label</label>
-            <InputTextArea @bind-Value="CurrentValue" />
             break;
 
         case "DropdownSingle":
@@ -66,6 +62,7 @@
             </Dropdown>
             break;
         default:
+            <label>@Label</label>
             <span>Control no soportado: @ControlType</span>
             break;
     }
@@ -74,14 +71,8 @@
 @code {
 
     [Parameter]
-    public string ControlType { get; set; }
+    public string? ControlType { get; set; }
 
     [Parameter]
-    public string Label { get; set; }
-
-    [Parameter]
-    public string CurrentValue { get; set; }
-
-    [Parameter]
-    public List<(string Value, string Label)> Options { get; set; } = new();
+    public string? Label { get; set; }
 }

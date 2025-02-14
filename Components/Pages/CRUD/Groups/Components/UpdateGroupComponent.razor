@@ -1,0 +1,103 @@
+﻿@* Usings *@
+
+@* Component Content *@
+<h3>@localizer["ComponentFormUpdateTitle"]</h3>
+
+@* Form *@
+<Form Model="formModel"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormSelectTemplate"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="@templatesPair.Values"
+                TItemValue="int"
+                TItem="int"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormSelectTemplate"]"
+                Value="@formModel.templateId"
+                ValueChanged="value => { formModel.templateId = value; }"
+                ValueExpression="@(() => formModel.templateId)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="0">
+            <SelectOptions>
+                @foreach (var template in templatesPair)
+                {
+                    <SelectOption TItemValue="int" TItem="int" Value="@template.Value" Label="@template.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelParentID"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.parentId" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelAuthorID"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.authorId" />
+    </FormItem>
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>UpdateButtonAction()">
+            @localizer["ComponentFormButtonUpdate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+</Form>
+
+
+@code {
+    // Parameters
+    [Parameter] public GetGroupListDTO? group { get; set; }
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public Dictionary<string, int>? templatesPair { get; set; }
+
+    [Parameter] public EventCallback<PutGroupDTO> Update { get; set; }
+    [Parameter] public EventCallback CancelUpdate { get; set; }
+    // Vars
+
+    // Form
+    private PutGroupDTO formModel { get; set; } = new PutGroupDTO();
+    private Form<PutGroupDTO>? form; // Para manejar el form
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Charge all dates into model to edit
+        if (group != null)
+        {
+            formModel.name = group.name;
+            formModel.description = group.description;
+            formModel.templateId = group.templateId;
+            formModel.order = group.order;
+            formModel.authorId = group.authorId;
+        }
+    }
+
+
+    // Buttons action
+    private async Task UpdateButtonAction()
+    {
+        await Update.InvokeAsync(formModel);
+    }
+
+    private async Task CancelButtonAction()
+    {
+        await CancelUpdate.InvokeAsync();
+    }
+}

@@ -1,0 +1,48 @@
+﻿
+@* Component content *@
+@* List *@
+<AntList Bordered DataSource="@GetDataSource()">
+    <Header>@localizer["ComponentListHeader"]</Header>
+
+    <ChildContent Context="item">
+        <ListItem>
+            <div>
+                <span>@item.order</span> |
+                <span>@item.name</span> |
+                <span>@item.description</span>
+                <span><a style="margin-left: 10px" @onclick="_=>EditButton(item)">@localizer["ComponentListEdit"]</a></span> |
+
+            </div>
+        </ListItem>
+    </ChildContent>
+</AntList>
+
+
+@code
+{
+    // Paramters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public List<GetServiceDTO>? allServices { get; set; }
+    [Parameter] public List<GetServiceByCategoryDTO>? servicesByCategory { get; set; }
+    [Parameter] public GetServiceByCategoryDTO? serviceFiltered { get; set; }
+
+    [Parameter] public EventCallback<dynamic> Edit { get; set; }
+
+
+    // Methods
+    // To Show the list
+    private IEnumerable<dynamic> GetDataSource()
+    {
+        if (serviceFiltered != null)
+            return new List<GetServiceByCategoryDTO> { serviceFiltered };
+        if (servicesByCategory != null)
+            return servicesByCategory.OrderBy(g => g.order);
+        return allServices?.OrderBy(g => g.order) ?? Enumerable.Empty<GetServiceDTO>();
+    }
+
+
+    private async Task EditButton(dynamic group)
+    {
+        await Edit.InvokeAsync(group);
+    }
+}

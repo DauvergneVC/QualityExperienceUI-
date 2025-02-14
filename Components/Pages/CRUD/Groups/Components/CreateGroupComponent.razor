@@ -1,0 +1,93 @@
+﻿
+@* Component Content *@
+<h3>@localizer["ComponentFormCreateTitle"]</h3>
+
+@* Form *@
+<Form @ref="form"
+      Model="@formModel"
+      ValidateOnChange="true"
+      Size="FormSize.Small">
+
+    @* Inputs and Selects *@
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormSelectTemplate"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="@templatesPair.Values"
+                TItemValue="int"
+                TItem="int"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormSelectTemplate"]"
+                Value="@formModel.templateID"
+                ValueChanged="value => { formModel.templateID = value; }"
+                ValueExpression="@(() => formModel.templateID)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="0">
+            <SelectOptions>
+                @foreach (var template in templatesPair)
+                {
+                    <SelectOption TItemValue="int" TItem="int" Value="@template.Value" Label="@template.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelAuthorID"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.authorID" />
+    </FormItem>
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>CreateButtonAction()">
+            @localizer["ComponentFormButtonCreate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+
+</Form>
+
+
+@code {
+    // Parameter
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public IMessageService? _message { get; set; }
+    [Parameter] public Dictionary<string, int>? templatesPair { get; set; }
+    [Parameter] public EventCallback CancelCreation { get; set; }
+    [Parameter] public EventCallback<CreateGroupDTO> Create { get; set; }
+
+    // Form
+    private CreateGroupDTO formModel { get; set; } = new CreateGroupDTO();
+    private Form<CreateGroupDTO>? form; // To manage the form.
+
+
+    // Buttons action
+    private async Task CreateButtonAction()
+    {
+        if (!form.Validate())
+        {
+            await _message.Warning("Form no validado");
+        }
+        else
+        {
+            await Create.InvokeAsync(formModel);
+            form.Reset();
+        }
+    }
+
+    private async Task CancelButtonAction()
+    {
+        form.Reset();
+        await CancelCreation.InvokeAsync();
+    }
+}

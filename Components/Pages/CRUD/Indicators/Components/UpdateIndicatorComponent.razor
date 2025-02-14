@@ -1,0 +1,94 @@
+﻿@* Component content *@
+<h3>@localizer["ComponentFormUpdateTitle"]</h3>
+
+<Form Model="formModel"
+      ValidateOnChange="true"
+      Size="FormSize.Small">
+
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelStatus"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.type" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelForCalculation"]" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelForCalculation"]"
+                Value="@formModel.forCalculation"
+                ValueChanged="value => { formModel.forCalculation = value; }"
+                ValueExpression="@(() => formModel.forCalculation)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="@("0")">
+            <SelectOptions>
+                <SelectOption TItemValue="string" TItem="string" Value="@("Yes")" Label="@("Yes")" />
+                <SelectOption TItemValue="string" TItem="string" Value="@("No")" Label="@("No")" />
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>UpdateButtonAction()">
+            @localizer["ComponentFormButtonUpdate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+</Form>
+
+
+@code
+{
+    // Parameters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public GetIndicatorDTO? indicator { get; set; }
+
+    [Parameter] public EventCallback<PutIndicatorDTO> Update { get; set; }
+    [Parameter] public EventCallback CancelUpdate { get; set; }
+    // Vars
+    private int? clientID;
+    // Form
+    private PutIndicatorDTO formModel { get; set; } = new PutIndicatorDTO();
+    private Form<PutIndicatorDTO>? form; // Para manejar el form
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Charge all dates into model to edit
+        if (indicator != null)
+        {
+            formModel.name = indicator.name;
+            formModel.description = indicator.description; 
+            formModel.order = indicator.order;
+            formModel.type = indicator.type;
+            formModel.forCalculation = indicator.forCalculation;
+        }
+    }
+
+
+    // Buttons action
+    private async Task UpdateButtonAction()
+    {
+        await Update.InvokeAsync(formModel);
+    }
+
+    private async Task CancelButtonAction()
+    {
+        await CancelUpdate.InvokeAsync();
+    }
+}

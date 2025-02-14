@@ -1,0 +1,284 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.CRUD.Services.Components;
+@using QualityExperienceUI.Data.Services.CRUD
+
+
+@page "/services"
+@attribute [ReuseTabsPage(Title = "Services")]
+
+
+@*Page Content*@
+@if(isReady)
+{
+    <Divider />
+    <h2>@localizer["PageTittle"]</h2>
+
+
+    <Divider />
+    @* Drawer to update Service *@
+    @if (editVisibleService)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="editVisibleService" Title="@(localizer["ComponentFormUpdateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <UpdateServiceComponent 
+                localizer="localizer"
+                service="serviceToUpdate"
+                serviceCategorypair="servicesCategoriesDictionary"
+                CancelUpdate="OnCloseDawer" 
+                Update="OnUpdateService"/>
+            </Drawer>
+        </div>
+    }
+    @* Drawer to update Service's categories' *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>editCategory=true">@localizer["PageDrawerEditCategoryButton"]</Button>
+    @if (editCategory)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="editCategory" Title="@(localizer["ComponentFormUpdateCategoryTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <UpdateServiceCategoryComponent localizer="localizer"
+                    categories="categories"
+                    Update="OnUpdateServiceCategory"
+                    CancelUpdate="OnCloseDawer"
+                    />
+            </Drawer>
+        </div>
+    }
+
+
+    @* Filter *@
+    <Divider />
+    <FilterServicesListComponent
+    localizer="localizer"
+    servicesCategoriesDictionary="servicesCategoriesDictionary"
+    servicesByCategoryDictionary="servicesByCategoryDictionary"
+    CategorySelect="OnCategorySelectChange"
+    ServiceSelect="OnServiceSelectChange" />
+
+
+    @* List *@
+    <Divider />
+    <ListServicesComponent 
+    localizer="localizer"
+    allServices="services"
+    servicesByCategory="servicesByCategory"
+    serviceFiltered="serviceFiltered"
+    Edit="OpenEdit"/>
+
+
+    <Divider />
+    @* Drawer to create Service *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>createServiceVisible=true">@localizer["PageDrawerCreateServiceButton"]</Button>
+    @if (createServiceVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="createServiceVisible" Title="@(localizer["PageDrawerCreateServiceButton"].Value)" OnClose="_=>OnCloseDawer()">
+                <CreateServiceComponent
+                    localizer="localizer"
+                    _message="_message"
+                    serviceCategorypair="servicesCategoriesDictionary"
+                    Cancel="OnCloseDawer"
+                    Create="OnCreateService" />
+            </Drawer>
+        </div>
+    }
+    @* Drawer to create Service's categories' *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>createServiceCategoryVisible=true">@localizer["PageDrawerCreateCategoryButton"]</Button>
+    @if (createServiceCategoryVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="createServiceCategoryVisible" Title="@(localizer["PageDrawerCreateCategoryButton"].Value)" OnClose="_=>OnCloseDawer()">
+                <CreateServiceCategoryComponent
+                    localizer="localizer"
+                    _message="_message"
+                    Cancel="OnCloseDawer"
+                    Create="OnCreateServiceCategory" />
+            </Drawer>
+        </div>
+    }
+}
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.ServicesResources.ServicesPages> localizer;
+@inject IMessageService _message
+@inject IServiceCRUD servicesGRUD
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+
+
+@code {
+    // vars
+    private bool isReady = false;
+    private bool editVisibleService = false;
+    private bool editCategory = false;
+
+    private bool createServiceVisible = false;
+    private bool createServiceCategoryVisible = false;
+
+    private int ServiceIdToUpdate;
+    // To send like a parameter
+    private List<GetServiceCategoriesDTO> categories = new();
+    Dictionary<string, int> servicesCategoriesDictionary = new();
+    Dictionary<string, int> servicesByCategoryDictionary = new();
+
+    List<GetServiceDTO>? services;
+    List<GetServiceByCategoryDTO>? servicesByCategory;
+    GetServiceByCategoryDTO? serviceFiltered;
+    dynamic? serviceToUpdate;
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Request to Back
+        await GetAllServices();
+        await GetServicesCategories();
+        categories = await servicesGRUD.GetServicesCategories();
+
+        isReady = true;
+    }
+
+
+    // Requests to Back CHANGE TO ONLY OBTAIN WITH THE CRUD SERVICE
+    #region
+    // Get all services
+    private async Task GetAllServices()
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesAsync());
+        if (!response.IsSuccess || response.Data == null)
+        {
+            var Message = response.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            services = response.Data;
+        }
+    }
+    // Get categories
+    private async Task GetServicesCategories()
+    {
+        servicesCategoriesDictionary.Clear();
+
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesCategories());
+        if (!response.IsSuccess || response.Data == null)
+        {
+            var Message = response.ErrorMessage ?? "Error en la respuesta"; 
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            foreach (var category in response.Data)
+            {
+                servicesCategoriesDictionary.Add(category.name, category.id);
+            }
+        }
+    }
+    //Get Services by category
+    private async Task GetServiceByCategory(int categoryID)
+    {
+        servicesByCategoryDictionary.Clear();
+
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesByCategory(categoryID));
+        if (response.Data == null || !response.IsSuccess)
+        {
+            var Message = response.ErrorMessage ?? localizer["PageGetServiceByCategoryDataNull"].Value;
+            // await _message.Error($"Error en la respuesta:\n {Message}");
+            await _message.Error(localizer["PageGetServiceByCategoryDataNull"].Value);
+
+        }
+        else
+        {
+            // Charge all dates, List and Dictionary
+            servicesByCategory = response.Data;
+            foreach (var service in response.Data)
+            {
+                servicesByCategoryDictionary.Add(service.name, service.id);
+            }
+        }
+    }
+
+    //Update Servie
+    private async Task UpdateService(PutServiceDTO serviceToUpdate)
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateServiceAsync(ServiceIdToUpdate, serviceToUpdate));
+        if (!response.IsSuccess)
+        {
+            await _message.Error(response.ErrorMessage);
+        }
+        else
+        {
+            await _message.Success(localizer["PageMessageUpdated"].Value);
+        }
+    }
+    #endregion
+
+
+    // Handle components methods
+    private async Task OnCloseDawer()
+    {
+        editCategory = false;
+        editVisibleService = false;
+        createServiceVisible = false;
+        createServiceCategoryVisible = false;
+        await GetAllServices();
+        await GetServicesCategories();
+    }
+    private async Task OnCategorySelectChange(int item)
+    {
+        serviceFiltered = null;
+        servicesByCategoryDictionary.Clear();
+        await GetServiceByCategory(item);
+    }
+    private void OnServiceSelectChange(int item)
+    {
+        serviceFiltered = null;
+        foreach (var service in servicesByCategory)
+        {
+            if (service.id == item)
+            {
+                serviceFiltered = service;
+            }
+        }
+    }
+
+    private async Task OpenEdit(dynamic group)
+    {
+        editVisibleService = true;
+        ServiceIdToUpdate = group.id;
+        serviceToUpdate = group;
+    }
+
+    private async Task OnUpdateService(PutServiceDTO serviceToUpdate)
+    {
+        await UpdateService(serviceToUpdate);
+    }
+
+    private async Task OnUpdateServiceCategory((int id, PutServiceCategoryDTO serviceCategoryToUpdate) data)
+    {
+        var request = await servicesGRUD.PutServiceCategory(data.id, data.serviceCategoryToUpdate);
+        if(request)
+        {
+            _message.Success(localizer["PageMessageUpdated"].Value);
+            categories = await servicesGRUD.GetServicesCategories();
+        }
+    }
+
+    private async Task OnCreateService(PostServicesDTO service)
+    {
+        var request = await servicesGRUD.PostService(service);
+        if (request)
+        {
+            _message.Success(localizer["PageMessageCreated"].Value);
+            await GetAllServices();
+        }
+    }
+    private async Task OnCreateServiceCategory(PostServicesCategoriesDTO category)
+    {
+        var request = await servicesGRUD.PostServiceCategory(category);
+        if (request)
+        {
+            _message.Success(localizer["PageMessageCreated"].Value);
+            await GetAllServices();
+        }
+    }
+}

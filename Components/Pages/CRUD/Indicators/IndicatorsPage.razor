@@ -1,0 +1,145 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.CRUD.Indicators.Components;
+
+
+@page "/indicators"
+@attribute [ReuseTabsPage(Title = "Indicators")]
+
+
+@*Page Content*@
+@if (isReady)
+{
+    <Divider />
+    <h2>@localizer["PageTitle"]</h2>
+
+
+    @* Drawer to create Group *@
+    <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>createVisible=true">@localizer["PageDrawerCreateGroupButton"]</Button>
+    @if (createVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="createVisible" Title="@(localizer["ComponentFormCreateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <CreateIndicatorComponent 
+                    localizer="localizer"
+                    _message="_message"
+                    Create="OnCreate"
+                    CancelCreation="OnCloseDawer" />
+            </Drawer>
+        </div>
+    }
+    @* Drawer to update Group *@
+    @if (editVisible)
+    {
+        <div>
+            <Drawer Closable="true" Width="720" Visible="editVisible" Title="@(localizer["ComponentFormUpdateTitle"].Value)" OnClose="_=>OnCloseDawer()">
+                <UpdateIndicatorComponent 
+                localizer="localizer"
+                indicator="indicatorToUpdate"
+                Update="OnUpdate"
+                CancelUpdate="OnCloseDawer" />
+            </Drawer>
+        </div>
+    }
+
+
+    <Divider />
+    @* Table with indicatrs *@
+    <IndicatorsTableComponent localizer="localizer"
+    indicators="indicators"
+    OpenEdit="OnOpenEdit"/>
+}
+
+
+@* Injects *@
+@inject IStringLocalizer<QualityExperienceUI.Local.IndicatorsResources.IndicatorsPage> localizer;
+@inject IApiMethods ApiMethods
+@inject ApiMiddleware ApiMiddleware
+@inject IMessageService _message
+
+
+@code {
+    // Vars
+    private bool isReady = false;
+    private bool createVisible = false;
+    private bool editVisible = false;
+
+    private GetIndicatorDTO? indicatorToUpdate;
+    // To send by parameters
+    private List<GetIndicatorDTO>? indicators;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Request to back
+        await GetAllIndicators();
+
+        isReady = true;
+    }
+
+    // Requests to Back
+    #region
+    // Get all Indicators
+    private async Task GetAllIndicators()
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetIndicatorsAsync());
+        if (!response.IsSuccess || response.Data == null)
+        {
+            var Message = response.ErrorMessage ?? "Error en la respuesta";
+            await _message.Error($"Error en la respuesta:\n {Message}");
+        }
+        else
+        {
+            indicators = response.Data;
+        }
+    }
+    //Update
+    private async Task UpdateIndicator(PutIndicatorDTO indicator)
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.UpdateIndicatorAsync(indicatorToUpdate.id, indicator));
+        if (!response.IsSuccess)
+        {
+            await _message.Error(response.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageUpdated"].Value);
+        }
+    }
+    //Create
+    private async Task CreateIndicator(PostIndicatorDTO indicator)
+    {
+        var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateIndicatorAsync(indicator));
+        if (!response.IsSuccess)
+        {
+            await _message.Error(response.ErrorMessage);
+        }
+        else
+        {
+            _message.Success(localizer["PageMessageCreated"].Value);
+        }
+    }
+    #endregion
+
+
+    // Handle components methods
+    private async Task OnCloseDawer()
+    {
+        createVisible = false;
+        editVisible = false;
+        await GetAllIndicators();
+    }
+    private async Task OnOpenEdit(GetIndicatorDTO indicator)
+    {
+        indicatorToUpdate = indicator;
+        editVisible = true;
+    }
+    private async Task OnUpdate(PutIndicatorDTO indicator)
+    {
+        await UpdateIndicator(indicator);
+    }
+    private async Task OnCreate(PostIndicatorDTO indicator)
+    {
+        await CreateIndicator(indicator);
+    }
+}

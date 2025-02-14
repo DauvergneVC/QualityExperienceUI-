@@ -34,13 +34,13 @@
         await JsRuntime.InvokeVoidAsync("console.log", jsonResult);
 
         // createGroups = JsonSerializer.Deserialize<List<CreateGroupDTO>>(jsonResult);
-        foreach (var group in createGroups)
-        {
-            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateGroups(group));
+        // foreach (var group in createGroups)
+        // {
+        //     var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.CreateGroups(group));
 
-            await JsRuntime.InvokeVoidAsync("console.log", group.name + group.templateID + group.authorID + group.order + group.parentID);
+        //     await JsRuntime.InvokeVoidAsync("console.log", group.name + group.templateID + group.authorID + group.order + group.parentID);
 
-        }
+        // }
     }
 
 
@@ -117,7 +117,7 @@
                         name = csv.GetField("name"),
                         description = csv.GetField("description"),
                         templateID = csv.GetField<int>("templateID"),
-                        parentID = csv.GetField<int>("parentID"),
+                        // parentID = csv.GetField<int>("parentID"),
                         order = csv.GetField<int>("order"),
                         authorID = csv.GetField<int>("authorID")
                     };

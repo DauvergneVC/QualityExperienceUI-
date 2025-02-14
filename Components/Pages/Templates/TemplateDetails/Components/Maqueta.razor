@@ -87,24 +87,24 @@
     {
         try
         {
-            var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetQuestionsByTemplate(templateID));
-            if (!response.IsSuccess || response.Data == null)
-            {
-                _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
-            }
-            else
-            {
-                Questions = response.Data;
-                // Inicializar el diccionario de respuestas
-                foreach (var group in Questions)
-                {
-                    groupResponses[group.id] = string.Empty;
-                    foreach (var question in group.questions)
-                    {
+            // var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetQuestionsByTemplate(templateID));
+            // if (!response.IsSuccess || response.Data == null)
+            // {
+            //     _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
+            // }
+            // else
+            // {
+            //     Questions = response.Data;
+            //     Inicializar el diccionario de respuestas
+            //     foreach (var group in Questions)
+            //     {
+            //         groupResponses[group.id] = string.Empty;
+            //         foreach (var question in group.questions)
+            //         {
 
-                    }
-                }
-            }
+            //         }
+            //     }
+            // }
         }
         catch (Exception ex)
         {

@@ -1,0 +1,23 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.Monitoreo.Evaluacion.Components
+
+
+@* Component Content *@
+@foreach (var questionItem in questionItems)
+{
+    <div style="display:flex; padding-right: 50px">
+
+        <EvaluationType ControlType="@questionItem.controlType"
+            Label="@questionItem.label" />
+            
+        <Divider Type="DividerType.Vertical" />
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public Data.Models.GetModels.QuestionEvaluationControl? questionEvaluationControl { get; set; }
+    [Parameter]
+    public List<Data.Models.GetModels.QuestionItems>? questionItems { get; set; }
+}

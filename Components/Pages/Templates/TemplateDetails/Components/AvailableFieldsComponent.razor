@@ -1,9 +1,55 @@
-﻿<div>
-    <Switch Checked Loading="@loading" />
-    <br />
-    <Switch Size="InputSize.Small" Loading="@loading"/>
+﻿
+@* Component content *@
+<div>
+    @* To agroup cuantity *@
+    @{
+        var chunks = contextFieldTypes
+        .Select((item, index) => new { item, index })
+        .GroupBy(x => x.index / 6) @* Select the items to show in a row *@
+        .Select(g => g.Select(x => x.item));
+    }
+
+    @foreach (var chunk in chunks)
+    {
+        <GridRow Style="display: flex; justify-content:space-between; margin-bottom: 16px">
+            @foreach (var contextFieldtype in chunk)
+            {
+                <GridCol Span="4" Style=" text-align:center;">
+                    <span>@contextFieldtype.name </span>
+                    <br />
+                    <Switch Checked="contextFieldtype.visible" Loading="@loading" />
+                    <br />
+                    <a @onclick="()=> Navegate(contextFieldtype.id)">Button</a>
+                </GridCol>
+            }
+        </GridRow>
+    }
+
+    <Divider Orientation="DividerOrientation.Right">
+        <Button OnClick="_=> OpenModalToCreate.InvokeAsync()">Create new Context field type</Button>
+    </Divider>
+
 </div>
 
+
 @code {
+    // Parameters
+    [Parameter] public List<GetContextFieldTypesDTO>? contextFieldTypes { get; set; }
+
+    [Parameter] public NavigationManager _navigationManager { get; set; }
+
+    [Parameter] public EventCallback OpenModalToCreate { get; set; }
+    // Vars
     private bool loading = false;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    private void Navegate(int contextFieldTypeID)
+    {
+        _navigationManager.NavigateTo($"/templates/ContextValeus-{contextFieldTypeID}");
+    }
 }

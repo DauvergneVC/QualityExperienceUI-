@@ -1,0 +1,180 @@
+﻿
+@* Component Content *@
+<h3>@localizer["ComponentFormCreateServiceTitle"]</h3>
+
+@* Form *@
+<Form @ref="form"
+      Model="@formModel"
+      ValidateOnChange="true"
+      Size="FormSize.Small">
+
+    @* Inputs and Selects *@
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelAuthorID"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.authorId" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormSelectCategory"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="@serviceCategorypair.Values"
+                TItemValue="int"
+                TItem="int"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormSelectCategory"]"
+                Value="@formModel.serviceCategoryId"
+                ValueChanged="value => { formModel.serviceCategoryId = value; }"
+                ValueExpression="@(() => formModel.serviceCategoryId)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="0">
+            <SelectOptions>
+                @foreach (var category in serviceCategorypair)
+                {
+                    <SelectOption TItemValue="int" TItem="int" Value="@category.Value" Label="@category.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelServiceType"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="serviceTypeList.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelServiceType"]"
+                Value="@formModel.serviceType"
+                ValueChanged="value => { formModel.serviceType = value; }"
+                ValueExpression="@(() => formModel.serviceType)"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'>
+            <SelectOptions>
+                @foreach (var serviceType in serviceTypeList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@serviceType.Value" Label="@serviceType.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOperationType"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="operationTypeList.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelOperationType"]"
+                Value="@formModel.operationType"
+                ValueChanged="value => { formModel.operationType = value; }"
+                ValueExpression="@(() => formModel.operationType)"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'>
+            <SelectOptions>
+                @foreach (var opreationType in operationTypeList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@opreationType.Value" Label="@opreationType.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelStatus"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="statusList"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="@localizer["ComponentFormLabelStatus"]"
+                Value="@formModel.status"
+                ValueChanged="value => { formModel.status = value; }"
+                ValueExpression="@(() => formModel.status)"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'>
+            <SelectOptions>
+                @foreach (var status in statusList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@status" Label="@status" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>CreateButtonAction()">
+            @localizer["ComponentFormButtonCreate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+
+</Form>
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public IMessageService? _message { get; set; }
+    [Parameter] public Dictionary<string, int>? serviceCategorypair { get; set; }
+
+    [Parameter] public EventCallback<PostServicesDTO> Create { get; set; }
+    [Parameter] public EventCallback Cancel { get; set; }
+    // Vars
+    private Dictionary<string, string> serviceTypeList = new Dictionary<string, string>()
+        {
+            {"CustomerService", "1"},
+            {"Sales", "2"},
+            {"TechnicalSupport", "3"},
+            {"Collections", "4"},
+            {"CustomerRetention", "5"},
+            {"CustomerExperience", "6"},
+            {"CustomerLoyalty", "7"},
+            {"CustomerAcquisition", "8"},
+            {"Complaints", "9"},
+            {"Apointments" ,"10"},
+        };
+    private Dictionary<string,string> operationTypeList = new Dictionary<string, string>()
+        {
+            {"Inbound" ,"1"},
+            {"Outbound" ,"2"},
+            {"Blended" ,"3"},
+            {"Chat" ,"4"},
+            {"Email" ,"5"},
+            {"SocialMedia", "6"},
+        };
+    private List<string> statusList = new List<string>
+        {
+            "Active",
+            "Inactive",
+        };
+    // Form
+    private PostServicesDTO formModel { get; set; } = new PostServicesDTO();
+    private Form<PostServicesDTO>? form; // Para manejar el form y poder limpiarlo.
+
+
+    // Buttons action
+    private async Task CreateButtonAction()
+    {
+        if (!form.Validate())
+        {
+            await _message.Warning("Form no validado");
+        }
+        else
+        {
+            await Create.InvokeAsync(formModel);
+            form.Reset();
+        }
+    }
+
+    private async Task CancelButtonAction()
+    {
+        form.Reset();
+        await Cancel.InvokeAsync();
+    }
+}

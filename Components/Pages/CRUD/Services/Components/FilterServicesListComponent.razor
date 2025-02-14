@@ -1,0 +1,57 @@
+﻿
+@* Component Content *@
+<h3>@localizer["ComponentFilterTitle"]</h3>
+
+@* Selects *@
+<Select DataSource="@servicesCategoriesDictionary.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="Select a category"
+OnSelectedItemChanged="@(item => CategorySelectChange(item))"
+Style="width: 200px">
+    <SelectOptions>
+        @foreach (var category in servicesCategoriesDictionary)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@category.Value" Label="@category.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+<Select DataSource="@servicesByCategoryDictionary.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="Select a service"
+OnSelectedItemChanged="@(item => ServicesSelectorChange(item))"
+Style="width: 200px">
+    <SelectOptions>
+        @foreach (var service in servicesByCategoryDictionary)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@service.Value" Label="@service.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+
+@code {
+    // Parameter
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public Dictionary<string, int>? servicesCategoriesDictionary { get; set; }
+    [Parameter] public Dictionary<string, int>? servicesByCategoryDictionary { get; set; }
+
+    [Parameter] public EventCallback<int> CategorySelect { get; set; }
+    [Parameter] public EventCallback<int> ServiceSelect { get; set; }
+
+
+    // Methods
+    // Slectors change values
+    private async Task CategorySelectChange(int item)
+    { 
+        await CategorySelect.InvokeAsync(item);
+    }
+    private async Task ServicesSelectorChange(int item)
+    {
+        await ServiceSelect.InvokeAsync(item);
+    }
+}

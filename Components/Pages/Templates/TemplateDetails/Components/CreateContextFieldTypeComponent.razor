@@ -1,0 +1,98 @@
+﻿
+<Form @ref="form"
+    Model="@formModel"
+    ValidateOnChange="true"
+    Size="FormSize.Small">
+    
+    <FormItem Label="name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+    
+    <FormItem Label="description" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+    
+    <FormItem Label="label" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.label" />
+    </FormItem>
+    
+    <FormItem Label="size" >
+        <Input @bind-Value="@formModel.size" />
+    </FormItem>
+    
+    <FormItem Label="max lenght" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.maxLength" />
+    </FormItem>
+    
+    <FormItem Label="order" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+    
+    <FormItem Label="Required?" >
+
+        <Select 
+                TItemValue="bool"
+                TItem="bool"
+                EnableSearch
+                Placeholder="Select a template type"
+                Value="@formModel.required"
+                ValueChanged="value => { formModel.required = value; }"
+                ValueExpression="@(() => formModel.required)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="false">
+            <SelectOptions>
+                <SelectOption TItemValue="bool" TItem="bool" Value="@true" Label="True" />
+                <SelectOption TItemValue="bool" TItem="bool" Value="@false" Label="False" />
+            </SelectOptions>
+        </Select>
+
+    </FormItem>
+    
+    <FormItem Label="Visible?" >
+        <Select TItemValue="bool"
+                TItem="bool"
+                EnableSearch
+                Placeholder="Select a template type"
+                Value="@formModel.visible"
+                ValueChanged="value => { formModel.visible = value; }"
+                ValueExpression="@(() => formModel.visible)"
+                DefaultActiveFirstOption="false"
+                DefaultValue="false">
+
+            <SelectOptions>
+                <SelectOption TItemValue="bool" TItem="bool" Value="@true" Label="True" />
+                <SelectOption TItemValue="bool" TItem="bool" Value="@false" Label="False" />
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="TemplateID" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.templateId" />
+    </FormItem>
+
+</Form>
+
+
+@inject IJSRuntime JsRuntime
+
+@code 
+{
+    // For Form
+    private PostContextFieldTypesdDTO formModel { get; set; } = new PostContextFieldTypesdDTO();
+    private Form<PostContextFieldTypesdDTO>? form;
+
+
+    // methods
+    public async Task<(bool isValid, PostContextFieldTypesdDTO data)> ValidateAndGetData()
+    {
+        if (form != null)
+        {
+            var validateResult = form.Validate();
+            if (validateResult)
+            {
+                return (validateResult, formModel);
+            }
+        }
+        return (false, formModel);
+    }
+}

@@ -1,0 +1,126 @@
+﻿
+@* Component Content *@
+<h3>@localizer["ComponentFormUpdateCategoryTitle"]</h3>
+
+
+@* Select category *@
+<Select DataSource="@serviceCategorypair.Values"
+TItemValue="int"
+TItem="int"
+EnableSearch
+Placeholder="@localizer["ComponentFormSelectCategory"]"
+Value="@idToUpdate"
+OnSelectedItemChanged="@(item => categorySelectedChange(item))"
+ValueChanged="value => { idToUpdate = value; }"
+ValueExpression="@(() => idToUpdate)"
+DefaultActiveFirstOption="false"
+DefaultValue="0">
+    <SelectOptions>
+        @foreach (var category in serviceCategorypair)
+        {
+            <SelectOption TItemValue="int" TItem="int" Value="@category.Value" Label="@category.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+@* Form *@
+<Form Model="formModel"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="@localizer["ComponentFormLabelName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelOrder"]" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.order" />
+    </FormItem>
+
+    <FormItem Label="@localizer["ComponentFormLabelAuthorID"]" Rules="@(FormValidationRules.idRules)">
+        <AntDesign.InputNumber @bind-Value="@formModel.authorID" />
+    </FormItem>
+
+
+    @* Buttons *@
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>UpdateButtonAction()">
+            @localizer["ComponentFormButtonUpdate"]
+        </Button>
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["ComponentFormButtonCancel"]
+        </Button>
+    </FormItem>
+</Form>
+
+
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+
+    [Parameter] public List<GetServiceCategoriesDTO> categories { get; set; }
+
+    [Parameter] public EventCallback<(int, PutServiceCategoryDTO)> Update { get; set; }
+    [Parameter] public EventCallback CancelUpdate { get; set; }
+    // Vars
+    private int idToUpdate;
+    private Dictionary<string, int> serviceCategorypair = new();
+    // Form
+    private PutServiceCategoryDTO formModel { get; set; } = new PutServiceCategoryDTO();
+    private Form<PutServiceCategoryDTO>? form; // Para manejar el form
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        foreach (var category in categories)
+        {
+            serviceCategorypair.Add(category.name, category.id);
+        }
+    }
+
+
+    // Select Change
+    private void categorySelectedChange(int item)
+    {
+        foreach(var category in categories)
+        {
+            if (category.id == item)
+            {
+                idToUpdate = item;
+
+                formModel.name = category.name;
+                formModel.description = category.description;
+                formModel.order = category.order;
+                formModel.authorID = category.authorID;
+            }
+        }
+    }
+
+
+    // Buttons action
+    private async Task UpdateButtonAction()
+    {
+        // Data to send
+        var data = (idToUpdate, formModel);
+
+        // refresh select data
+        serviceCategorypair.Clear();
+
+        await Update.InvokeAsync(data);
+
+        // refresh select data
+        foreach (var category in categories)
+        {
+            serviceCategorypair.Add(category.name, category.id);
+        }
+    }
+
+    private async Task CancelButtonAction()
+    {
+        await CancelUpdate.InvokeAsync();
+    }
+}

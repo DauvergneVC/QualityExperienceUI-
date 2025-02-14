@@ -1,0 +1,74 @@
+﻿@* Usings *@
+@using AntDesign.Filters
+
+
+@* Component Content *@
+<h3>@localizer["ComponentTableTitle"]</h3>
+
+<Table @ref="_table" PageSize="5" DataSource="@(indicators != null ? indicators: new List<GetIndicatorDTO>())" Size="TableSize.Middle" Bordered="false" RowExpandable="@(record=> true)" Locale="_tableLocale">
+    <ColumnDefinitions>
+        <PropertyColumn Property="c=>c.name"
+                        Title="@localizer["ComponentTableColumnName"]"
+                        SorterCompare="@((a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase))"
+                        SortDirections="new[] { SortDirection.Ascending, SortDirection.Descending }"
+                        Filterable FieldFilterType="simpleStringFilter" />
+
+        <PropertyColumn Property="c=>c.description"
+                        Title="@localizer["ComponentTableColumnDescription"]" />
+
+        <PropertyColumn Property="c=>c.order"
+                        Title="@localizer["ComponentTableColumnOrder"]" />
+
+        <ActionColumn Title="@localizer["ComponentTableColumnActions"]">
+            <CellRender Context="cellData">
+                <a style="margin-left: 10px" @onclick="()=> EditClient(context)">@localizer["ComponentTableEditButton"]</a>
+            </CellRender>
+        </ActionColumn>
+    </ColumnDefinitions>
+
+    <ExpandTemplate>
+        <p>@localizer["ComponentTableColumnExpandId"]: @context.Data.id</p>
+        <p>@localizer["ComponentTableColumnExpandType"]: @context.Data.type</p>
+        <p>@localizer["ComponentTableColumnExpandForCalculation"]: @context.Data.forCalculation</p>
+
+    </ExpandTemplate>
+
+</Table>
+
+
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer? localizer { get; set; }
+    [Parameter] public List<GetIndicatorDTO>? indicators { get; set; }
+
+    [Parameter] public EventCallback<GetIndicatorDTO> OpenEdit { get; set; }
+
+    // Filter
+    readonly StringFieldFilterType simpleStringFilter = new() { SupportedCompareOperators = new[] { TableFilterCompareOperator.Contains, TableFilterCompareOperator.NotEquals } };
+    // Vars
+    ITable? _table;
+    private TagColor color;
+    private TableLocale _tableLocale = new TableLocale();
+    string? dateFormat;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize tableLocale with localizer Values
+        _tableLocale = new TableLocale
+            {
+                TriggerAsc = localizer["ComponentTableLocaleTriggerAsc"].Value,
+                TriggerDesc = localizer["ComponentTableLocaleTriggerDesc"].Value,
+                CancelSort = localizer["ComponentTableLocaleCancelSort"].Value,
+            };
+        // Inizialide DateFormat
+        dateFormat = localizer["DateTimeFormater"].Value;
+    }
+
+    // Actions table methods
+    private async Task EditClient(GetIndicatorDTO indicator)
+    {
+        await OpenEdit.InvokeAsync(indicator);
+    }
+}

@@ -1,0 +1,37 @@
+﻿<div>
+    @switch (questionEvaluationControl.evaluationControl)
+    {
+        case "Radio":
+            <div>
+                <RadioGroup @bind-Value="@radioValue">
+                    @foreach (var value in questionEvaluationControl.values)
+                    {
+                        @if (value == 3)
+                        {
+                            textValue[value] = "N/a";
+                        }
+                        else
+                        {
+                            textValue[value] = value == 1 ? "Yes" : "No";
+                        }
+                        <Radio Value="@value">@textValue[value]</Radio>
+                    }
+                </RadioGroup>
+            </div>
+            break;
+
+
+        default:
+            <label>@questionEvaluationControl.evaluationControl</label>
+            <span>Question evaluation control type no soportado: @questionEvaluationControl.evaluationControl</span>
+            break;
+    }
+</div>
+
+@code {
+
+    [Parameter] public Data.Models.GetModels.QuestionEvaluationControl questionEvaluationControl { get; set; }
+    // Vars
+    private int radioValue = 1;
+    private string []? textValue = new string[4];
+}

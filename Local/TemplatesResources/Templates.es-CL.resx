@@ -220,7 +220,7 @@
     <value>dd 'de' MMMM 'de' yyyy</value>
   </data>
   <data name="DateTimeFormater" xml:space="preserve">
-    <value>dd 'de' MMMM 'de' yyyy HH:mm</value>
+    <value>dd 'de' MMMM 'de' yyyy 'a las' HH:mm</value>
   </data>
   <data name="TableViewButton" xml:space="preserve">
     <value>Ver y editar plantilla</value>

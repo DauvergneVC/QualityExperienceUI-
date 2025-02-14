@@ -41,12 +41,9 @@ namespace QualityExperienceUI.Data.Models
 
     public class TemplateCreateDto
     {
-        [Required]
         public string? Name { get; set; }
         public string? Description { get; set; }
-        [Required]
         public string? AuthorID { get; set; }
-        [Required]
         public int ClientID { get; set; }
         public string? CalculationType { get; set; }
         public string? AllowAttachment { get; set; }

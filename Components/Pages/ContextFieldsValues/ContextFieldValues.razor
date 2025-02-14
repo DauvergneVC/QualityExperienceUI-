@@ -1,0 +1,122 @@
+﻿@*Usings*@
+@using QualityExperienceUI.Components.Pages.ContextFieldsValues.Components;
+
+
+@page "/templates/ContextValeus-{contextFieldTypeID:int}"
+
+
+@* Page component *@
+@if (isReady)
+{
+    <h3>ContextFieldValues</h3>
+
+    <AntList Bordered DataSource="valuesList" ItemLayout="@ListItemLayout.Vertical">
+        <ChildContent Context="item">
+
+            <ListItem Actions="Actions(item)">
+
+                <ListItemMeta Description="@("Created: " + item.createdAt.ToString() + " and updated: " + item.updatedAt )">
+                    <TitleTemplate>
+                        <span>@item.name</span>
+                    </TitleTemplate>
+                </ListItemMeta>
+                <span> <a >Edit</a> </span>
+                <Divider Type="DividerType.Vertical" />
+                <span> <a @onclick="() => Delete(item.id)">Delete</a></span>
+            </ListItem>
+        </ChildContent>
+    </AntList>
+
+
+
+    @* Modal to create *@
+    <Divider Orientation="DividerOrientation.Right">
+        <Button OnClick="_=> modalCreateContextField = true">Create new Context field value</Button>
+    </Divider>
+
+    <Modal
+    Visible="@modalCreateContextField"
+    OkText="@("Create")"
+    OnOk="@HandleOk"
+    OnCancel="@HandleCancel">
+        <Header>
+            <span>Create context field Value</span>
+        </Header>
+        <ChildContent>
+            <CreateContextFieldValueComponent @ref="createContextFieldValueComponent" 
+            contextFieldTypeID="contextFieldTypeID"/>
+        </ChildContent>
+    </Modal>
+}
+
+
+@* Injects *@
+@inject IContextFieldCRUD _contextFieldCrud
+@inject IMessageService _message
+
+
+@code {
+    // Parameter
+    [Parameter] public int contextFieldTypeID {get; set;}
+    // Vars
+    private bool isReady = false;
+    private bool modalCreateContextField = false;
+    private List<GetConextxFielValuesdDTO>? valuesList;
+
+    private CreateContextFieldValueComponent? createContextFieldValueComponent;
+
+    // Accion buttons render
+    private RenderFragment[] Actions(GetConextxFielValuesdDTO item) => new RenderFragment[] {
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddContent(2, "Edit");
+                builder.CloseElement();
+        },
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
+                builder.AddContent(2, "Delete");
+                builder.CloseElement();        }
+    };
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        valuesList = await _contextFieldCrud.GetContextFieldValuesByField(contextFieldTypeID);
+        isReady = true;
+    }
+
+    // Buttons
+    private async Task Delete(int ContextFieldValueID)
+    {
+        var response = await _contextFieldCrud.DeleteContextFieldValue(ContextFieldValueID);
+    }
+
+
+    private async Task HandleOk()
+    {
+        // Valida el formulario en el componente hijo.
+        var (isValid, formData) = await createContextFieldValueComponent.ValidateAndGetData();
+
+        if (isValid)
+        {
+            var response = await _contextFieldCrud.PostContextFieldValue(formData);
+            if (response)
+            {
+                valuesList = await _contextFieldCrud.GetContextFieldValuesByField(contextFieldTypeID);
+                await _message.Success("Success");
+                modalCreateContextField = false;
+            }
+        }
+        else
+        {
+            _message.Warning("Form no validado");
+        }
+    }
+
+    private void HandleCancel(MouseEventArgs e)
+    {
+        modalCreateContextField = false;
+    }
+}
