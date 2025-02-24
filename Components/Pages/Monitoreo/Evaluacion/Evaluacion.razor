@@ -7,48 +7,45 @@
 
 <h3>Evaluacion</h3>
 @* Animation *@
-<Collapse Animation>
+@* <Collapse Animation> *@
 
-    @foreach (var group in Questions)
-    {
-        <Panel Key="@group.id.ToString()">
+@*     @foreach (var group in Questions) *@
+@*     { *@
+@*         <Panel Key="@group.id.ToString()"> *@
 
-            <HeaderTemplate >
-                <div style="display: flex; justify-content: space-between;">
-                    <p>@group.name</p>
+@*             <HeaderTemplate > *@
+@*                 <div style="display: flex; justify-content: space-between;"> *@
+@*                     <p>@group.name</p> *@
 
-                    <RadioGroup Options="@YesNo"
-                    @bind-Value="@groupResponses[group.id]"/>
-                </div>
-                <p>@groupResponses[group.id]</p>
-            </HeaderTemplate>
+@*                     <RadioGroup Options="@YesNo" *@
+@*                     @bind-Value="@groupResponses[group.id]"/> *@
+@*                 </div> *@
+@*                 <p>@groupResponses[group.id]</p> *@
+@*             </HeaderTemplate> *@
 
-            <ChildContent>
+@*             <ChildContent> *@
 
-                @foreach (var questions in group.questions)
-                {
-                    <div style="display: flex; justify-content: space-between">
+@*                 @foreach (var questions in group.questions) *@
+@*                 { *@
+@*                     <div style="display: flex; justify-content: space-between"> *@
 
-                    <p>@questions.name</p>
+@*                     <p>@questions.name</p> *@
 
-                    @* Radios *@
+@*                         <div style="display: flex; justify-content:right; padding-right:20px "> *@
+@*                             @foreach(var questionItems in questions.questionItems) *@
+@*                             { *@
+@*                                 <EvaluationType ControlType="@questionItems.controlType" Label="@questionItems.label"/> *@
+@*                             } *@
+@*                         </div> *@
+@*                     </div> *@
+@*                     <Divider /> *@
+@*                 } *@
+@*             </ChildContent> *@
+@*         </Panel> *@
 
-                    @* ControlTypes *@
-                        <div style="display: flex; justify-content:right; padding-right:20px ">
-                            @foreach(var questionItems in questions.questionItems)
-                            {
-                                <EvaluationType ControlType="@questionItems.controlType" Label="@questionItems.label"/>
-                            }
-                        </div>
-                    </div>
-                    <Divider />
-                }
-            </ChildContent>
-        </Panel>
-
-    }
+@*     } *@
     
-</Collapse>
+@* </Collapse> *@
 
 @* Injects *@
 @inject IApiMethods ApiMethods
@@ -80,7 +77,7 @@
 
 
     // Items to list
-    IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
+    // IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
 
 
     protected override async Task OnInitializedAsync()

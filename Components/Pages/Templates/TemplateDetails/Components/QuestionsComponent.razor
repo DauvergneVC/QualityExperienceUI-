@@ -6,11 +6,11 @@
     <ChildContent Context="item">
 
         <ListItem Actions="Actions(item)" >
-                <ListItemMeta Description="@($"| Code: {item.id} | Status: {item.status} | Description: {item.description}")">
-                    <TitleTemplate> 
-                        @item.name
-                    </TitleTemplate>
-                </ListItemMeta>
+            <ListItemMeta Description="@($"| Code: {item.id} | Status: {item.status} | Description: {item.description}")">
+                <TitleTemplate> 
+                    <Input @bind-Value="@item.name" style="width: 500px" />
+                </TitleTemplate>
+            </ListItemMeta>
 
             @* Question Evaluation control *@
             <label>Evaluation Control: </label>
@@ -19,9 +19,9 @@
 
         <ListItem >
             <div style="display: flex; text-align: left;">
-            @* Question Items (Validation, ControlType, questionItems) *@
+                @* Question Items (Validation, ControlType, questionItems) *@
                 <QuestionsItems questionEvaluationControl="@item.questionEvaluationControl"
-                    questionItems="@item.questionItems"/>
+                questionItems="@item.questionItems"/>
             </div>
         </ListItem>
 
@@ -33,18 +33,29 @@
 @code {
     // Parameters
     [Parameter] public List<GetQuestionsByTemplateIdDTO>? allDataOfQuestions { get; set; }
+    [Parameter] public EventCallback<(GetQuestionsByTemplateIdDTO, Data.Models.GetModels.QuestionResponse)> OpenEditQuestion { get; set; }
 
     // Vars
+    GetQuestionsByTemplateIdDTO groupQuestionData = new();
     /// CAMBIAR DATA.MODEL... CUANDO SE ELIMINE QUESTION ANTERIOR
-    private RenderFragment[] Actions(Data.Models.GetModels.Questions item) => new RenderFragment[] {
-        builder => {
+    private RenderFragment[] Actions(Data.Models.GetModels.QuestionResponse item) => new RenderFragment[] {
+        builder => 
+        {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => SendDataToEdit(item)));
+                builder.AddContent(2, "Modify");
+                builder.CloseElement();
+        },
+        builder => 
+        {
                 builder.OpenElement(0, "a");
                 // builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
                 builder.AddContent(2, "Delete");
-                builder.CloseElement();        }
+                builder.CloseElement();
+        }
     };
     // Related with allquestionData
-    private List<Data.Models.GetModels.Questions>? questions = new();
+    private List<Data.Models.GetModels.QuestionResponse>? questions = new();
 
 
     // Methods
@@ -54,7 +65,7 @@
         {
             foreach(var questionInAllData in allDataOfQuestions)
             {
-                var questionInCicle = questionInAllData.questions;
+                var questionInCicle = questionInAllData.Questions;
                 foreach (var question in questionInCicle)
                 {
                     questions.Add(question);
@@ -63,4 +74,19 @@
         }
     }
 
+    private async Task SendDataToEdit(Data.Models.GetModels.QuestionResponse item)
+    {
+        foreach (var questionAllData in allDataOfQuestions)
+        {
+            foreach (var question in questionAllData.Questions)
+            {
+                if (question.id == item.id)
+                {
+                    groupQuestionData = questionAllData;
+                }
+            }
+        }
+        var allData = (groupQuestionData, item);
+        await OpenEditQuestion.InvokeAsync(allData);
+    }
 }

@@ -1,0 +1,64 @@
+﻿@* Form *@
+<Form @ref="form"
+Model="@_model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+
+    <FormItem Label="Question name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="_model.Name" />
+    </FormItem>
+
+    <FormItem Label="Description" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="_model.Description" />
+    </FormItem>
+
+</Form>
+
+
+@code{
+    [Parameter] public int templateId { get; set; }
+
+    private PostQuestionsDTO _model { get; set; } = new PostQuestionsDTO();
+    private Form<PostQuestionsDTO>? form;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        _model.TemplateId = templateId;
+
+        _model.Name = "";
+        _model.Description = "";
+
+        _model.GroupId = 0;
+        _model.SubGroupId = 0;
+        _model.AuthorId = 1;
+        _model.IndicatorId = 0;
+        _model.Order = 1;
+        _model.CriticalQuestionValue = 0;
+        _model.Type = "1";
+        _model.Status = "1";
+        _model.Critical = "2";
+        _model.CalculationType = "1";
+        _model.GlobalWeight = 0;
+        _model.IndicatorWeight = 0;
+        _model.QuestionEvaluationControlID = 0;
+    }
+
+
+    public async Task<(bool isValid, PostQuestionsDTO data)> ValidateAndGetData()
+    {
+        if(form != null)
+        {
+            var validateResult = form.Validate();
+            if (validateResult)
+            {
+                return (true, _model);
+            }
+        }
+        
+        return (false, _model);
+    }
+
+}

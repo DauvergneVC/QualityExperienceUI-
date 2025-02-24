@@ -143,7 +143,25 @@ namespace QualityExperienceUI.Data.Services
 
         // Questions
         // Get
+        [Get("/api/questions")]
+        Task<ApiResponse<List<GetQuestionsDTO>>> GetAllQuestionsAsync();
+
         [Get("/api/templates/{id}/questions")]
         Task <ApiResponse<List<GetQuestionsByTemplateIdDTO>>> GetQuestionsByTemplateIdAsync(int id);
+
+        [Get("/api/questions/metadata")]
+        Task<ApiResponse<GetQuestionMetadataDTO>> GetQuestionMetadataAsync();
+
+        // Put
+        [Put("/api/questions/{questionId}")]
+        Task<ApiResponse<HttpResponseMessage>> PutQuestionAsync(int questionId, [Body] PutQuestionDTO question);
+
+        // Post
+        [Post("/api/questions")]
+        Task<ApiResponse<HttpResponseMessage>> PostQuestionAsync([Body] PostQuestionsDTO question);
+
+        [Post("/api/question-items")]
+        Task<ApiResponse<HttpResponseMessage>> PostQuestionItemAsync([Body] PostQuestionItemDTO questionItem);
+
     }
 }

@@ -31,6 +31,7 @@ builder.Services.AddScoped<ApiMiddleware>();
 builder.Services.AddScoped<IServiceCRUD, ServicesCRUD>();
 builder.Services.AddScoped<IContextFieldCRUD, ContextFieldCRUD>();
 builder.Services.AddScoped<IQuestionsCRUD, QuestionsCRUD>();
+builder.Services.AddScoped<IGroupsCRUD, GroupsCRUD>();
 
 
 var app = builder.Build();

@@ -1,5 +1,7 @@
 ﻿@* Usings *@
 @using QualityExperienceUI.Components.Pages.Templates.TemplateDetails.Components
+@using QualityExperienceUI.Components.Pages.Templates.TemplateDetails.Components.SubComponents
+
 
 
 @* Page content *@
@@ -21,10 +23,10 @@
     @* Tabs *@
     <Tabs DefaultActiveKey="1">
 
-        <TabPane Tab="Services & Campos">
+        <TabPane Key="1" Tab="Services & Campos">
             <Divider Orientation="DividerOrientation.Left" Text="Asociated services" />
 
-            @* <TransferServices services="services" /> *@
+            <TransferServices services="services" />
 
 
             <Divider Orientation="DividerOrientation.Left" Text="Context field types" />
@@ -54,15 +56,48 @@
 
         <TabPane Tab="Questions">
             <Divider Orientation="DividerOrientation.Left" Text="Questions List"/>
-            <QuestionsComponent allDataOfQuestions="allDataOfQuestions"/>
-            <br />
-            <br />
-        </TabPane>
 
-        <TabPane Tab="Groups">
-            <br />
-            <br />
-            <Groups />
+            @* Modal to Create Questions and groups questions *@
+            <Button Type="ButtonType.Primary" OnClick="_=> modalCreateQuestion=true" >Create new Question</Button>
+
+            <Modal Visible="@modalCreateQuestion"
+            OkText="@("Create")"
+            OnOk="@HandleCreateQuestion"
+            OnCancel="@HandleCancel"
+            Style="width: 750px; justify-content: center">
+                <Header>
+                    Create Question
+                </Header>
+                <ChildContent>
+                    <CreateQuestionComponent @ref="createQuestionComponent" 
+                        templateId="templateID"/>
+                </ChildContent>
+            </Modal>
+
+
+            @* List Questions *@
+            <ListQuestionComponent />
+            @* <QuestionsComponent allDataOfQuestions="allDataOfQuestions" *@
+            @* OpenEditQuestion="OpenModalTomodifyQuestion" /> *@
+
+
+            @* Modal to Modify Questions and groups questions *@
+            <Modal Visible="@modalModifyQuestion"
+            OkText="@("Update")"
+            OnOk="@HandleOkUpdateQuestion"
+            OnCancel="@HandleCancel"
+            Style="width: 750px; justify-content: center">
+                <Header>
+                    <span>Modify question: @questionToUpdate.name</span>
+                </Header>
+                <ChildContent>
+                    <EditQuestionComponent 
+                    questionToUpdate="questionToUpdate" 
+                    groupsQuestionToUpdate="groupInfoToUpdateQuetion"
+                    groups="groupsList"
+                    templateId="templateID"/>
+                </ChildContent>
+            </Modal>
             <br />
             <br />
         </TabPane>
@@ -141,6 +176,8 @@
     private bool isReady = false;
     private static bool modalConfirm = true; /* Confirm delete buttons */
     private bool modalCreateContextField = false;
+    private bool modalModifyQuestion = false;
+    private bool modalCreateQuestion = false;
     // Send by paramters
     private TemplateListByIDDto template = new();
     private List<NameValuePair> templateState = new();
@@ -149,7 +186,11 @@
     private List<NameValuePair> allowAttachment = new();
     private List<NameValuePair> feedbackType = new();
     public List<GetQuestionsByTemplateIdDTO>? allDataOfQuestions;
-    // IEnumerable<ServiceListDTO>? services = new List<ServiceListDTO>();
+    private List<GetGroupListDTO> groupsList = new();
+
+    private GetQuestionsByTemplateIdDTO groupInfoToUpdateQuetion = new();
+    private Data.Models.GetModels.QuestionResponse questionToUpdate = new();
+    List<GetServiceDTO>? services = new List<GetServiceDTO>();
 
     private List<GetContextFieldTypesDTO>? contextFieldTypes;
 
@@ -166,7 +207,7 @@
             var templateResponce = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplatesByIDAsync(templateID));
             var templateOptions = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetTemplateOptionsAsync());
             var servicesResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetServicesAsync());
-
+            var groupsResponse = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetGroupsAsync());
             if (!templateOptions.IsSuccess || !templateResponce.IsSuccess)
             {
                 var Message = templateOptions.ErrorMessage != null ? templateOptions.ErrorMessage : templateResponce.ErrorMessage;
@@ -181,7 +222,8 @@
                 allowAttachment = templateOptions.Data.AllowAttachment;
                 feedbackType = templateOptions.Data.FeedbackType;
 
-                // services = servicesResponse.Data;
+                services = servicesResponse.Data;
+                groupsList = groupsResponse.Data;
             }
             isReady = true;
 
@@ -282,5 +324,49 @@
     private void HandleCancel(MouseEventArgs e)
     {
         modalCreateContextField = false;
+        modalModifyQuestion = false;
+        modalCreateQuestion = false;
     }
+
+    private void OpenModalTomodifyQuestion((GetQuestionsByTemplateIdDTO groupsInfo, Data.Models.GetModels.QuestionResponse question) allData)
+    {
+        groupInfoToUpdateQuetion = allData.groupsInfo;
+        questionToUpdate = allData.question;
+        modalModifyQuestion = true;
+    }
+
+    private async Task HandleOkUpdateQuestion()
+    {
+
+    }
+
+
+    private CreateQuestionComponent? createQuestionComponent;
+    private async Task HandleCreateQuestion()
+    {
+        try
+        {
+            var (isValid, formData) = await createQuestionComponent.ValidateAndGetData();
+            if (isValid)
+            {
+                var response = await _questionsCrud.PostQuestionAsync(formData);
+                if (response)
+                {
+                    allDataOfQuestions = await _questionsCrud.GetQuestionsByTemplateIdAsync(templateID);
+                    await _message.Success("Success");
+                    modalCreateQuestion = false;
+                }
+            }
+            else
+            {
+                _message.Warning("Form no validado");
+            }
+        }
+        catch (Exception ex)
+        {
+            _message.Warning(ex.Message);
+        }
+        
+    }
+    
 }

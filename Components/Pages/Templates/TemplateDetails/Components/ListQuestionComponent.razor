@@ -1,0 +1,541 @@
+﻿@* Usings *@
+@using QualityExperienceUI.Components.Pages.Templates.TemplateDetails.Components.SubComponents
+
+@page "/test-question"
+@if(ready)
+{
+    @* List *@
+    <AntList DataSource="questionsToShow" Bordered>
+        <ChildContent Context="question">
+
+            <ListItem Actions="Actions(question)">
+
+                <ListItemMeta Description="@($"| Question code: {question.id} | Question status: {question.status} | Description: {question.description}")">
+                    <TitleTemplate>
+                        <TextArea @bind-Value="@question.name"
+                        OnBlur="@(() => HandleNameChange(question))"
+                        Style="width: 400px; height: 20px">
+                        </TextArea>
+                    </TitleTemplate>
+
+                </ListItemMeta>
+
+                @* Modify groups *@
+                <div>
+                    <label>Group associated</label>
+                    <Select DataSource="groupsIdPair.Values"
+                    TItemValue="int"
+                    TItem="int"
+                    EnableSearch
+                    Value="@(question.groupId ?? 0)"
+                    ValueChanged="@(value => HandleGroupChange(question, value))"
+                    DefaultActiveFirstOption="false"
+                    Style="width: 200px">
+                        <SelectOptions>
+                            @foreach (var item in groupsIdPair)
+                            {
+                                <SelectOption TItemValue="int" TItem="int" Value="@item.Value" Label="@item.Key" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </div>
+
+                @* Modify EvaluationControl *@
+                @* Modify EvaluationControl *@
+                <div>
+                    <label>Evaluation control</label>
+                    <Select DataSource="evaluationControlDictionary.Values"
+                    TItemValue="int"
+                    TItem="int"
+                    EnableSearch
+                    Value="@(question.questionEvaluationControl?.id ?? 0)"
+                    ValueChanged="@(value => HandleEvaluationControlChange(question, value))"
+                    DefaultActiveFirstOption="false"
+                    Style="width: 200px">
+                        <SelectOptions>
+                            @foreach (var item in evaluationControlDictionary)
+                            {
+                                <SelectOption TItemValue="int" TItem="int" Value="@((int)item.Value)" Label="@item.Key" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </div>
+            </ListItem>
+
+            @* Lis Items *@
+            <ListItem>
+                <div style="display: flex; text-align: left;">
+                    @* Question Items (Validation, ControlType, questionItems) *@
+                    <QuestionsItems questionEvaluationControl="@question.questionEvaluationControl"
+                    questionItems="@question.questionItems" />
+                </div>
+            </ListItem>
+
+            <Divider />
+        </ChildContent>
+    </AntList>
+
+
+    @* Modal to create Questions items *@
+    <Modal Visible="@createItem"
+    OkText="@("Create")"
+    OnOk="@HandleOkCreate"
+    OnCancel="@HandleCancel"
+    Style="width: 750px; justify-content: center">
+        <Header>
+            <span>Create question item</span>
+        </Header>
+        <ChildContent>
+
+            <Form @ref="formQuestionItemCreate"
+            Layout="FormLayout.Vertical"
+            Model="@questionItemModelCreate"
+            ValidateOnChange="true"
+            Size="FormSize.Small">
+
+                <FormItem Label="Label" Rules="@(FormValidationRules.textRules)">
+                    <Input @bind-Value="@questionItemModelCreate.Label" />
+                </FormItem>
+
+                <FormItem Label="Control Type" Rules="@(FormValidationRules.selectRules)">
+                    <Select TItemValue="string"
+                    TItem="string"
+                    EnableSearch
+                    Style="width: 200px"
+                    @bind-Value="@questionItemModelCreate.ControlType"
+                    DefaultActiveFirstOption="false">
+                        <SelectOptions>
+                            @foreach (var item in controlTypesDictionary)
+                            {
+                                <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </FormItem>
+
+                <FormItem Label="Size" Rules="@(FormValidationRules.selectRules)">
+                    <Select TItemValue="string"
+                    TItem="string"
+                    EnableSearch
+                    Style="width: 200px"
+                    @bind-Value="@questionItemModelCreate.Size"
+                    DefaultActiveFirstOption="false">
+                        <SelectOptions>
+                            @foreach (var item in sizesDictionary)
+                            {
+                                <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                            }
+                        </SelectOptions>
+                    </Select>
+                </FormItem>
+
+
+            </Form>
+
+        </ChildContent>
+    </Modal>
+}
+
+
+@* // TEMPORAL *@
+@inject IQuestionsCRUD _questionsCrud
+@inject IGroupsCRUD _groupsCrud
+@inject IMessageService _message
+
+@code {
+    // Parameters
+    [Parameter] public List<GetQuestionsDTO>? allQuestions { get; set; }
+    [Parameter] public int templateId { get; set; } = 1;
+
+    [Parameter] public Dictionary<string, int> groupsIdPair { get; set; } = new();
+
+    /* TEMPORAL*/
+    bool ready = false;
+    bool createItem = false;
+    public List<string>? questionEvaluationControlsValues;
+    public Dictionary<string, int> evaluationControlDictionary = new();
+
+    private int idToCreateItem = 0;
+    private PostQuestionItemDTO questionItemModelCreate { get; set; } = new PostQuestionItemDTO();
+    private Form<PostQuestionItemDTO>? formQuestionItemCreate;
+
+    private List<GetQuestionsDTO> questionsToShow = new();
+
+    // Renders for questions control
+    #region
+    private RenderFragment[] Actions(GetQuestionsDTO question) => new RenderFragment[] {
+        builder =>
+        {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () =>openCreate(question.id)));
+                builder.AddContent(2, "Add Item");
+                builder.CloseElement();
+        },
+        builder =>
+        {
+                builder.OpenElement(0, "a");
+                // builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
+                builder.AddContent(2, "Delete");
+                builder.CloseElement();
+        }
+    };
+    #endregion
+
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        /* TEMPORAL*/
+        allQuestions = await _questionsCrud.GetAllQuestionsAsync();
+        var groups = await _groupsCrud.GetAllGroupsAsync();
+
+        foreach (var group in groups)
+        {
+            groupsIdPair.Add(group.name, group.id);
+        }
+
+        foreach (var question in allQuestions)
+        {
+            if (question.templateId == templateId)
+            {
+                questionsToShow.Add(question);
+            }
+        }
+
+        // Poblar el diccionario de evaluation controls usando el enum
+        evaluationControlDictionary = new Dictionary<string, int>
+        {
+            { "Yes/No", (int)EvaluationControlType.YesNo },
+            { "Yes/No/NA", (int)EvaluationControlType.YesNoNA },
+            { "Custom Checkbox", (int)EvaluationControlType.CustomCheckbox },
+            { "Survey (EPA)", (int)EvaluationControlType.SurveyEPA },
+            { "Survey (NPS)", (int)EvaluationControlType.SurveyNPS }
+        };
+
+        ready = true;
+    }
+
+
+
+    /* TEMPORAL */
+    // CHAnge select group in back
+    private async Task UpdateQuestionData(GetQuestionsDTO question, int newGroupId, int? evaluationControlId = null)
+    {
+        try
+        {
+            PutQuestionDTO putQuestion = new()
+                {
+                    groupId = newGroupId,
+                    subGroupId = question.subGroupId,
+                    indicatorId = question.indicatorID,
+                    name = question.name,
+                    description = question.description,
+                    order = question.order,
+                    criticalQuestionValue = question.criticalQuestionValue,
+                    type = question.type,
+                    status = question.status,
+                    critical = question.critical,
+                    calculationType = question.calculationType,
+                    globalWeight = question.globalWeight,
+                    indicatorWeight = question.indicatorWeight,
+                    questionEvaluationControlId = evaluationControlId ?? question.questionEvaluationControl?.id
+                };
+
+            var response = await _questionsCrud.putQuestionAsync(question.id, putQuestion);
+
+            if (response)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await _message.Success("Question updated successfully");
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Error updating question: {ex.Message}");
+        }
+    }
+
+    // Agrega un diccionario para rastrear si ya se ha inicializado un control para cada pregunta
+    private Dictionary<int, bool> _initializedControls = new();
+
+    // Resto del código...
+
+    private void HandleGroupChange(GetQuestionsDTO question, int newValue)
+    {
+        // Comprueba si es la primera vez que se llama para esta pregunta
+        if (!_initializedControls.ContainsKey(question.id))
+        {
+            _initializedControls[question.id] = true;
+            // Si es la primera llamada, solo actualiza el valor en el modelo y sale
+            question.groupId = newValue;
+            return;
+        }
+
+        // Si ya se inicializó antes, verifica si el valor realmente cambió
+        if (question.groupId == newValue)
+            return;
+
+        // Actualiza inmediatamente el valor en el modelo (UI)
+        question.groupId = newValue;
+
+        // Programar la actualización en el servidor como una tarea separada
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await UpdateQuestionData(question, newValue);
+            }
+            catch (Exception ex)
+            {
+                // Manejo de errores usando InvokeAsync para UI updates
+                await InvokeAsync(async () =>
+                {
+                    await _message.Error($"Error updating question: {ex.Message}");
+                });
+            }
+        });
+    }
+
+    private void HandleNameChange(GetQuestionsDTO question)
+    {
+        // Verificar si el nombre realmente cambió (opcional)
+        if (string.IsNullOrWhiteSpace(question.name))
+        {
+            _message.Warning("Question name cannot be empty");
+            return;
+        }
+
+        // Programar la actualización en el servidor
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Reutilizamos el método existente pero sin cambiar el grupo
+                await UpdateQuestionData(question, question.groupId ?? 0);
+            }
+            catch (Exception ex)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await _message.Error($"Error updating question name: {ex.Message}");
+                });
+            }
+        });
+    }
+
+    private Dictionary<int, bool> _initializedEvaluationControls = new();
+
+    private void HandleEvaluationControlChange(GetQuestionsDTO question, int newValue)
+    {
+        // Comprueba si es la primera vez que se llama para esta pregunta
+        if (!_initializedEvaluationControls.ContainsKey(question.id))
+        {
+            _initializedEvaluationControls[question.id] = true;
+            // Si es la primera llamada, solo actualiza el valor en el modelo y sale
+            if (question.questionEvaluationControl == null)
+            {
+                question.questionEvaluationControl = new QuestionEvaluationControl { id = newValue };
+            }
+            else
+            {
+                question.questionEvaluationControl.id = newValue;
+            }
+            return;
+        }
+
+        // Si ya se inicializó antes, verifica si el valor realmente cambió
+        if (question.questionEvaluationControl?.id == newValue)
+            return;
+
+        // Actualiza inmediatamente el valor en el modelo (UI)
+        if (question.questionEvaluationControl == null)
+        {
+            question.questionEvaluationControl = new QuestionEvaluationControl { id = newValue };
+        }
+        else
+        {
+            question.questionEvaluationControl.id = newValue;
+        }
+
+        // Programar la actualización en el servidor
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var putQuestion = new PutQuestionDTO
+                    {
+                        groupId = question.groupId,
+                        subGroupId = question.subGroupId,
+                        indicatorId = question.indicatorID,
+                        name = question.name,
+                        description = question.description,
+                        order = question.order,
+                        criticalQuestionValue = question.criticalQuestionValue,
+                        type = question.type,
+                        status = question.status,
+                        critical = question.critical,
+                        calculationType = question.calculationType,
+                        globalWeight = question.globalWeight,
+                        indicatorWeight = question.indicatorWeight,
+                        questionEvaluationControlId = newValue  // Aquí es donde hacemos el cambio principal
+                    };
+
+                var response = await _questionsCrud.putQuestionAsync(question.id, putQuestion);
+
+                if (response)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        await _message.Success("Evaluation control updated successfully");
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await _message.Error($"Error updating evaluation control: {ex.Message}");
+                });
+            }
+        });
+    }
+
+
+    private void openCreate(int id)
+    {
+        idToCreateItem = id;
+        createItem = true;
+    }
+    private async Task HandleOkCreate()
+    {
+        if (formQuestionItemCreate != null)
+        {
+            var validateResult = formQuestionItemCreate.Validate();
+            if (validateResult)
+            {
+                try
+                {
+                    questionItemModelCreate.QuestionId = idToCreateItem;
+                    var response = await _questionsCrud.PostQuestionItemAsync(questionItemModelCreate);
+
+                    if (response)
+                    {
+                        await InvokeAsync(async () =>
+                        {
+                            await _message.Success($"Question item created successfully");
+                        });
+
+                        // Actualizar la lista
+                        await RefreshQuestionsList();
+
+                        // Limpiar y cerrar el modal
+                        questionItemModelCreate = new PostQuestionItemDTO();
+                        formQuestionItemCreate.Reset();
+                        createItem = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        await _message.Error($"Error creating question item: {ex.Message}");
+                    });
+                }
+            }
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        try
+        {
+            // Actualizar la lista
+            await RefreshQuestionsList();
+
+            // Limpiar y cerrar el modal
+            questionItemModelCreate = new PostQuestionItemDTO();
+            if (formQuestionItemCreate != null)
+            {
+                formQuestionItemCreate.Reset();
+            }
+            createItem = false;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Error refreshing questions: {ex.Message}");
+        }
+    }
+
+    // Método para refrescar la lista
+    private async Task RefreshQuestionsList()
+    {
+        allQuestions = await _questionsCrud.GetAllQuestionsAsync();
+        questionsToShow.Clear();
+
+        if (allQuestions != null)
+        {
+            foreach (var question in allQuestions)
+            {
+                if (question.templateId == templateId)
+                {
+                    questionsToShow.Add(question);
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    public enum EvaluationControlType
+    {
+        YesNo = 1,          // [1,2]
+        YesNoNA = 2,        // [1,2,3]
+        CustomCheckbox = 3,  // [1,2]
+        SurveyEPA = 4,      // [1,2,3,4,5]
+        SurveyNPS = 5       // [0,1,2,3,4,5,6,7,8,9,10]
+    }
+
+
+    public enum AccessControlType
+    {
+        DropdownSingle = 1,
+        DropdownMultiple = 2,
+        TextArea = 3,
+        Text = 4,
+        Number = 5,
+        Color = 6,
+        Email = 7,
+        Date = 8,
+        Time = 9
+    }
+
+    public enum ItemSize
+    {
+        Small = 1,
+        Medium = 2,
+        Large = 3
+    }
+
+    private Dictionary<string, string> controlTypesDictionary = new()
+    {
+        { "Dropdown Single", "1" },
+        { "Dropdown Multiple", "2" },
+        { "Text Area", "3" },
+        { "Text", "4" },
+        { "Number", "5" },
+        { "Color", "6" },
+        { "Email", "7" },
+        { "Date", "8" },
+        { "Time", "9" }
+    };
+
+    private Dictionary<string, string> sizesDictionary = new()
+    {
+        { "Small", "1" },
+        { "Medium", "2" },
+        { "Large", "3" }
+    };
+}

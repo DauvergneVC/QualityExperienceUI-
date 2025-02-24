@@ -1,115 +1,172 @@
-﻿@* Usings *@
-@using QualityExperienceUI.Components.Pages.Monitoreo.Evaluacion.Components
+﻿@using QualityExperienceUI.Components.Pages.Monitoreo.Evaluacion.Components
 @using QualityExperienceUI.Data.Models
 
-
-@* Component content *@
 <h3>ATRIBUTOS</h3>
 <Collapse Animation>
-
-    @foreach (var group in Questions)
+    @foreach (var group in questions)
     {
-        <Panel Key="@group.id.ToString()">
-
+        <Panel Key="@group.Id.ToString()">
             <HeaderTemplate>
-                <div style="display: flex; justify-content: space-between;">
-                    <p>@group.name</p>
-
-                    <RadioGroup Options="@YesNo"
-                                @bind-Value="@groupResponses[group.id]" />
+                <div style="display: flex; justify-content: space-between; align-items: center">
+                    <span>@group.Id</span>
+                    <span>@group.Name</span>
+                    @if (HasRadioQuestions(group))
+                    {
+                        <RadioGroup Options="@YesNo"
+                                    Value="@groupResponses[group.Id]"
+                                    OnChange="@(async (string value) => await HandleGroupRadioChange(group.Id, value))" />
+                    }
                 </div>
-                <p>@groupResponses[group.id]</p>
             </HeaderTemplate>
-
             <ChildContent>
-
-                @foreach (var questions in group.questions)
+                @foreach (var question in group.Questions)
                 {
-                    <div style="display: flex; justify-content: space-between">
-
-                        <p>@questions.name</p>
-
-                        @* Radios *@
-
-                        @* ControlTypes *@
-                        <div style="display: flex; justify-content:right; padding-right:20px ">
-                            @foreach (var questionItems in questions.questionItems)
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+                        <p style="margin: 0">@question.name</p>
+                        <div style="display: flex; justify-content: right; padding-right: 20px">
+                            @if (IsRadioQuestion(question))
                             {
-                                <EvaluationType ControlType="@questionItems.controlType" Label="@questionItems.label" />
+                                @if (!questionResponses.ContainsKey(question.id))
+                                {
+                                    questionResponses[question.id] = string.Empty;
+                                }
+                                <RadioGroup Options="@YesNo"
+                                            Value="@questionResponses[question.id]"
+                                            OnChange="@(async (string value) => await HandleQuestionRadioChange(group.Id, question.id, value))" />
+                            }
+                            else
+                            {
+                                @foreach (var questionItem in question.questionItems)
+                                {
+                                    <EvaluationType ControlType="@questionItem.controlType" Label="@questionItem.label" />
+                                }
                             }
                         </div>
                     </div>
                     <Divider />
+
                 }
             </ChildContent>
         </Panel>
-
     }
-
 </Collapse>
 
-
-@* Injects *@
+@inject IQuestionsCRUD _questionsCRUD
 @inject IApiMethods ApiMethods
 @inject ApiMiddleware ApiMiddleware
 @inject IMessageService _message
-
 
 @code {
     [Parameter]
     public int templateID { get; set; }
 
-    // Radios
-    private Dictionary<int?, string?> groupResponses = new();
-    RadioOption<string>[] YesNo = new RadioOption<string>[]
-    {
-        new(){ Value = "Yes", Label="Yes", },
-        new(){ Value = "No", Label="No", },
+    private Dictionary<int?, string> groupResponses = new();
+    private Dictionary<int, string> questionResponses = new();
 
+    private RadioOption<string>[] YesNo = new[]
+    {
+        new RadioOption<string> { Value = "Yes", Label = "Yes" },
+        new RadioOption<string> { Value = "No", Label = "No" }
     };
-    //Radio question control
-    private string[,]? questionsRadioValues;
-    private bool ChangeRadioValues(string value)
-    {
-        if (value == "Yes")
-        {
-            return true;
-        }
-        return false;
-    }
 
-
-    // Items to list
-    IEnumerable<QuestionsListByTemplateDTO>? Questions = new List<QuestionsListByTemplateDTO>();
-
+    private List<GetQuestionsByTemplateIdDTO> questions = new();
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // var response = await ApiMiddleware.ExecuteRequestAsync(() => ApiMethods.GetQuestionsByTemplate(templateID));
-            // if (!response.IsSuccess || response.Data == null)
-            // {
-            //     _message.Error($"Error en la respuesta:\n {response.ErrorMessage}");
-            // }
-            // else
-            // {
-            //     Questions = response.Data;
-            //     Inicializar el diccionario de respuestas
-            //     foreach (var group in Questions)
-            //     {
-            //         groupResponses[group.id] = string.Empty;
-            //         foreach (var question in group.questions)
-            //         {
+            questions = await _questionsCRUD.GetQuestionsByTemplateIdAsync(templateID);
 
-            //         }
-            //     }
-            // }
+            if (questions != null)
+            {
+                foreach (var group in questions)
+                {
+                    groupResponses[group.Id] = string.Empty;
+
+                    if (group.Questions != null)
+                    {
+                        foreach (var question in group.Questions)
+                        {
+                            if (IsRadioQuestion(question))
+                            {
+                                questionResponses[question.id] = string.Empty;
+                            }
+                        }
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
-            // Log or display the full exception details
-            _message.Error($"Excepción completa: {ex.ToString()}");
+            await _message.Error($"Error al cargar las preguntas: {ex.Message}");
+        }
+    }
+
+    private bool IsRadioQuestion(QuestionResponse question)
+    {
+        return question.questionEvaluationControl?.evaluationControl?.ToLower() == "radio";
+    }
+
+    private bool HasRadioQuestions(GetQuestionsByTemplateIdDTO group)
+    {
+        return group.Questions?.Any(q => IsRadioQuestion(q)) ?? false;
+    }
+
+    private async Task HandleGroupRadioChange(int groupId, string value)
+    {
+        try
+        {
+            groupResponses[groupId] = value;
+
+            var group = questions.FirstOrDefault(g => g.Id == groupId);
+            if (group?.Questions != null)
+            {
+                foreach (var question in group.Questions)
+                {
+                    if (IsRadioQuestion(question))
+                    {
+                        await HandleQuestionRadioChange(groupId, question.id, value, true);
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Error al actualizar el grupo: {ex.Message}");
+        }
+    }
+
+    private async Task HandleQuestionRadioChange(int groupId, int questionId, string value, bool isFromGroup = false)
+    {
+        try
+        {
+            questionResponses[questionId] = value;
+
+            if (!isFromGroup)
+            {
+                // Verificar si todas las preguntas de tipo Radio del grupo tienen el mismo valor
+                var group = questions.FirstOrDefault(g => g.Id == groupId);
+                if (group?.Questions != null)
+                {
+                    var radioQuestions = group.Questions.Where(IsRadioQuestion).ToList();
+                    if (radioQuestions.Any())
+                    {
+                        bool allSameValue = radioQuestions.All(q =>
+                            questionResponses.ContainsKey(q.id) &&
+                            questionResponses[q.id] == value);
+
+                        groupResponses[groupId] = allSameValue ? value : string.Empty;
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Error al actualizar la pregunta: {ex.Message}");
         }
     }
 }

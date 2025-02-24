@@ -5,12 +5,12 @@
 @* Component Content *@
 @foreach (var questionItem in questionItems)
 {
+    <Divider Type="DividerType.Vertical" />
     <div style="display:flex; padding-right: 50px">
 
         <EvaluationType ControlType="@questionItem.controlType"
             Label="@questionItem.label" />
             
-        <Divider Type="DividerType.Vertical" />
     </div>
 }
 

@@ -23,7 +23,7 @@
 
 @code {
     [Parameter]
-    public IEnumerable<ServiceListDTO>? Services { get; set; }
+    public List<GetServiceDTO>? Services { get; set; }
 
     private List<TransferItem>? _dataSource;
     private List<string> _targetKeys = new List<string>();

@@ -1,0 +1,170 @@
+﻿@* @if (ready) *@
+@* { *@
+@*     <Form @ref="form" *@
+@*     Layout="FormLayout.Inline" *@
+@*     Model="@_model" *@
+@*     ValidateOnChange="true" *@
+@*     Size="FormSize.Small"> *@
+
+
+@*         <Divider Orientation="DividerOrientation.Left" Text="Controls & values" /> *@
+
+@*         <FormItem Label="Validation" Rules="@(FormValidationRules.selectRules)"> *@
+@*             <Select DataSource="validation.Values" *@
+@*             TItemValue="int" *@
+@*             TItem="int" *@
+@*             EnableSearch *@
+@*             Value="@_model.questionEvaluationControlId" *@
+@*             ValueChanged="value => { _model.questionEvaluationControlId = value; }" *@
+@*             ValueExpression="@(() => _model.questionEvaluationControlId)" *@
+@*             DefaultActiveFirstOption="false" *@
+@*             DefaultValue="@_model.questionEvaluationControlId" *@
+@*             Style=" width: 200px"> *@
+@*                 <SelectOptions> *@
+@*                     @foreach (var item in validation) *@
+@*                     { *@
+@*                         <SelectOption TItemValue="int" TItem="int" Value="@item.Value" Label="@item.Key" /> *@
+@*                     } *@
+@*                 </SelectOptions> *@
+@*             </Select> *@
+@*         </FormItem> *@
+
+
+@*         <Divider Orientation="DividerOrientation.Left" Text="Groups" /> *@
+
+@*         <FormItem Label="Group" Rules="@(FormValidationRules.selectRules)" > *@
+@*             <Select DataSource="groupsSelect.Values" *@
+@*             TItemValue="int" *@
+@*             TItem="int" *@
+@*             EnableSearch *@
+@*             Value="@_model.questionEvaluationControlId" *@
+@*             ValueChanged="value => { _model.groupId = value; }" *@
+@*             ValueExpression="@(() => _model.groupId)" *@
+@*             DefaultActiveFirstOption="false" *@
+@*             DefaultValue="@_model.groupId" *@
+@*             Style=" width: 200px"> *@
+@*                 <SelectOptions> *@
+@*                     @foreach (var item in groupsSelect) *@
+@*                     { *@
+@*                         <SelectOption TItemValue="int" TItem="int" Value="@item.Value" Label="@item.Key" /> *@
+@*                     } *@
+@*                 </SelectOptions> *@
+@*             </Select> *@
+
+@*         </FormItem> *@
+@*     </Form> *@
+
+@*     <Divider Orientation="DividerOrientation.Center"> *@
+@*         <Button OnClick="_=> addItems = true">Add Question items</Button> </Divider> *@
+
+@*     @if (addItems) *@
+@*     { *@
+@*         <Form @ref="formQuestionItem" *@
+@*               Layout="FormLayout.Inline" *@
+@*               Model="@questionItemModel" *@
+@*               ValidateOnChange="true" *@
+@*               Size="FormSize.Small"> *@
+
+@*             <FormItem Label="ControlType"> *@
+@*                 <Select DataSource="questionItems_ControlType.Values" *@
+@*                         TItemValue="string" *@
+@*                         TItem="string" *@
+@*                         EnableSearch *@
+@*                         Value="@questionItemModel.ControlType" *@
+@*                         ValueChanged="value => { questionItemModel.ControlType = value; }" *@
+@*                         ValueExpression="@(() => questionItemModel.ControlType)" *@
+@*                         DefaultActiveFirstOption="false" *@
+@*                         Style=" width: 200px"> *@
+@*                     <SelectOptions> *@
+@*                         @foreach (var item in questionItems_ControlType) *@
+@*                         { *@
+@*                             <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" /> *@
+@*                         } *@
+@*                     </SelectOptions> *@
+@*                 </Select> *@
+@*             </FormItem> *@
+
+@*         </Form> *@
+@*     } *@
+@* } *@
+
+
+
+
+@* @code { *@
+@*     [Parameter] public GetQuestionsByTemplateIdDTO? groupsQuestionToUpdate { get; set; } *@
+@*     [Parameter] public Data.Models.GetModels.Questions? questionToUpdate { get; set; } *@
+@*     [Parameter] public int templateId { get; set; } *@
+
+@*     [Parameter] public List<GetGroupListDTO>? groups { get; set; } *@
+
+
+@*     // Vars *@
+@*     private bool ready = false; *@
+@*     private bool addItems = false; *@
+@*     private PutQuestionDTO _model { get; set; } = new PutQuestionDTO(); *@
+@*     private Form<PutQuestionDTO>? form; *@
+
+@*     private PostQuestionItemDTO questionItemModel { get; set; } = new PostQuestionItemDTO(); *@
+@*     private Form<PostQuestionItemDTO>? formQuestionItem; *@
+
+@*     // Vars for EditQuestionform *@
+@*     private Dictionary<string, int>? validation = new Dictionary<string, int>() *@
+@*         { *@
+@*             { "Yes/No", 1}, *@
+@*             {"Yes/No/Na", 2 }, *@
+@*             {"CheckBox", 3}, *@
+@*             {"Survey (EPA)", 4}, *@
+@*             {"Survey (NPS)", 5} *@
+@*         }; *@
+
+@*     // Vars for EditQuestionform *@
+@*     private Dictionary<string, string>? questionItems_ControlType = new Dictionary<string, string>() *@
+@*     { *@
+@*         {"DropdownSingle" , "1"}, *@
+@*         {"DropdownMultiple" , "2"}, *@
+@*         {"TextArea" , "3"}, *@
+@*         {"Text" , "4"}, *@
+@*         {"Number" , "5"}, *@
+@*         {"Color" , "6"}, *@
+@*         {"Email" , "7"}, *@
+@*         {"Date" , "8"}, *@
+@*         {"Time" ,"9"}     *@
+@*     }; *@
+
+
+@*     private Dictionary<string, int>? groupsSelect = new(); *@
+
+
+
+
+@*     // Methods *@
+@*     protected override async Task OnInitializedAsync() *@
+@*     { *@
+@*         _model.groupId = groupsQuestionToUpdate.groupId; *@
+@*         _model.subGroupId = 0; // MODIFY *@
+@*         _model.indicatorId = questionToUpdate.indicatorID; *@
+@*         _model.name = questionToUpdate.name; *@
+@*         _model.description = questionToUpdate.description; *@
+@*         _model.order = questionToUpdate.order; *@
+@*         _model.criticalQuestionValue = questionToUpdate.criticalQuestionValue; *@
+@*         _model.type = questionToUpdate.type; *@
+@*         _model.status = questionToUpdate.status; *@
+@*         _model.critical = questionToUpdate.critical; *@
+@*         _model.calculationType = questionToUpdate.calculationType; *@
+@*         _model.globalWeight = questionToUpdate.globalWeight; *@
+@*         _model.indicatorId = questionToUpdate.indicatorID; *@
+@*         _model.questionEvaluationControlId = questionToUpdate.questionEvaluationControl.id; *@
+
+@*         // Charge dictionaries *@
+@*         if (groups != null) *@
+@*         { *@
+@*             foreach (var group in groups) *@
+@*             { *@
+@*                 groupsSelect.Add(group.name, group.id); *@
+@*             } *@
+@*         } *@
+@*         addItems = false; *@
+@*         ready = true; *@
+@*     } *@
+@* } *@
