@@ -68,5 +68,23 @@ namespace QualityExperienceUI.Local.Data.ToolTips {
                 return ResourceManager.GetString("Defaulth", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Defaulth tooltip2.
+        /// </summary>
+        public static string Tooltip2 {
+            get {
+                return ResourceManager.GetString("Tooltip2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string ToolTipTitle {
+            get {
+                return ResourceManager.GetString("ToolTipTitle", resourceCulture);
+            }
+        }
     }
 }

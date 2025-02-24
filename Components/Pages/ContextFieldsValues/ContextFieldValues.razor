@@ -20,9 +20,7 @@
                         <span>@item.name</span>
                     </TitleTemplate>
                 </ListItemMeta>
-                <span> <a >Edit</a> </span>
                 <Divider Type="DividerType.Vertical" />
-                <span> <a @onclick="() => Delete(item.id)">Delete</a></span>
             </ListItem>
         </ChildContent>
     </AntList>
@@ -76,6 +74,11 @@
                 builder.OpenElement(0, "a");
                 builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
                 builder.AddContent(2, "Delete");
+                builder.CloseElement();        
+        },
+        builder => {
+                builder.OpenElement(0, "h1");
+                builder.AddContent(2, "H!");
                 builder.CloseElement();        }
     };
 

@@ -120,4 +120,7 @@
   <data name="Defaulth" xml:space="preserve">
     <value>Tooltip predeterminado</value>
   </data>
+  <data name="Tooltip2" xml:space="preserve">
+    <value>Tooltip predeterminado2</value>
+  </data>
 </root>
