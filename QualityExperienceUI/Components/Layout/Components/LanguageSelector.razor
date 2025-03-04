@@ -1,0 +1,40 @@
+﻿@using System.Globalization
+@using QualityExperienceUI.Local.Resources.LayoutResources
+@inject IStringLocalizer<LayoutRes> localizer
+@inject NavigationManager Navigation
+
+
+<div style="color: white">
+    <label>@localizer["LanguageSelectLabel"]</label>
+    <select @bind="Culture" style="background-color: #001529; border:none">
+        <option value="en-US">@localizer["LanguageSelectEnglish"]</option>
+        <option value="es-CL">@localizer["LanguageSelectSpanish"]</option>
+    </select>
+</div>
+
+@code
+{
+    protected override void OnInitialized()
+    {
+        Culture = CultureInfo.CurrentCulture;
+    }
+
+    private CultureInfo Culture
+    {
+        get
+        {
+            return CultureInfo.CurrentCulture;
+        }
+        set
+        {
+            if (CultureInfo.CurrentCulture != value)
+            {
+                var uri = new Uri(Navigation.Uri).GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+                var cultureEscaped = Uri.EscapeDataString(value.Name);
+                var uriEscaped = Uri.EscapeDataString(uri);
+
+                Navigation.NavigateTo($"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}", forceLoad: true);
+            }
+        }
+    }
+}

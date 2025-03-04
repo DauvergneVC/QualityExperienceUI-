@@ -1,0 +1,75 @@
+﻿@using System.ComponentModel.DataAnnotations
+
+@* Component List context types *@
+<AntList Grid="grid" DataSource="(allContextFieldsTypes?? new List<GetContextFieldsTypesDTO>())">
+
+    <ListItem Actions="Actions(context)">
+        <Card Bordered Title="@($"{context.Label}")"  Style="text-align:center">
+
+            <ListItemMeta Description="@($"{context.Description}")" >
+                @* Here I can put the name or other data like a title *@
+            </ListItemMeta>
+
+            @* Content  down of title and description*@
+            <Switch Checked="context.Visible" Loading="@loading" />
+            <br />
+            <br />
+            <a @onclick="()=>OnNavegateToValues.InvokeAsync(context.Id)"
+            style="color: blue; border-radius: 5px; background-color: aqua; padding: 5px 30px;">
+                @localizer["ContextFieldsViewContextValues"]
+            </a>
+        </Card>
+    </ListItem>
+    <br />
+</AntList>
+
+
+@code {
+    // Injects parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+
+    // Events
+    [Parameter] public EventCallback<int> OnNavegateToValues { get; set; }
+    [Parameter] public EventCallback<GetContextFieldsTypesDTO> OnUpdatedButton { get; set; }
+    [Parameter] public EventCallback<int> OnDeletedButton { get; set; }
+
+    // List parameters
+    [Parameter] public List<GetContextFieldsTypesDTO>? allContextFieldsTypes { get; set; }
+
+    // grid and list vars
+    private ListGridType grid = new ListGridType // To controll grid properties
+    {
+            Gutter = 8, 
+            Column = 5, 
+            // Xs = 1,
+            // Sm = 2,
+            // Md = 4,
+            // Lg = 4,
+            // Xl = 6,
+            // Xxl = 3,
+        };
+
+    // Vars
+    private bool loading = false;
+
+    // List actions
+    private RenderFragment[] Actions(GetContextFieldsTypesDTO item) => new RenderFragment[] {
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => OnUpdatedButton.InvokeAsync(item)));
+                builder.AddAttribute(2, "style", "color: blue;");
+                builder.AddContent(3, localizer["EditButton"]);
+                builder.CloseElement();
+        },
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => OnDeletedButton.InvokeAsync(item.Id)));
+                builder.AddAttribute(2, "style", "color: blue;");
+                builder.AddContent(3, localizer["DeleteButton"]);
+                builder.CloseElement();
+        }
+    };
+
+
+
+}

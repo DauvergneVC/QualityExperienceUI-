@@ -1,0 +1,148 @@
+﻿@using System.ComponentModel.DataAnnotations
+
+
+@* Component content *@
+
+@* Select client *@
+<Select DataSource="@clientsPair.Values"
+TItemValue="int?"
+TItem="int"
+EnableSearch
+Placeholder="@localizer["FilterSelectClient"]"
+OnSelectedItemChanged="@(_=>restFilters = true)"
+@bind-Value="clientID"
+Style="width: 200px;">
+
+    <SelectOptions>
+        @foreach (var valor in clientsPair)
+        {
+            <SelectOption TItemValue="int?" TItem="int" Value="@valor.Value" Label="@valor.Key" />
+        }
+    </SelectOptions>
+</Select>
+
+@if (restFilters)
+{
+    @* Select template status *@
+    <Select
+    TItemValue="int?"
+    TItem="int"
+    EnableSearch
+    Placeholder="@localizer["SelectStatusPlaceHolder"].Value"
+    @bind-Value="status"
+    Style="width: 200px">
+
+        <SelectOptions>
+            @foreach (var valor in templateState)
+            {
+                <SelectOption TItemValue="int?" TItem="int" Value="@valor.Value" Label="@valor.Name" />
+            }
+        </SelectOptions>
+    </Select>
+
+    @* Select template type *@
+    <Select TItemValue="int?"
+    TItem="int"
+    EnableSearch
+    Placeholder="@localizer["SelectTypePlaceholder"].Value"
+    @bind-Value="type"
+    Style="width: 200px">
+
+        <SelectOptions>
+            @foreach (var valor in templateType)
+            {
+                <SelectOption TItemValue="int?" TItem="int" Value="@valor.Value" Label="@valor.Name" />
+            }
+        </SelectOptions>
+    </Select>
+
+    @* Author ID *@
+    <Input Placeholder="@localizer["InputAuthorIDPlaceholder"]" @bind-Value="authorID" Style="width: 200px" />
+
+    @* Date range *@
+    <br />
+    <DatePicker TValue="DateTime?" Picker="DatePickerType.Date" @bind-Value="startDate" Style="width: 200px" />
+    <DatePicker TValue="DateTime?" Picker="DatePickerType.Date" @bind-Value="endDate" Style="width: 200px" />
+
+
+    @* Buttons *@
+    <Button @onclick="_=>SearchButton()">@localizer["SearchButtonFilter"]</Button>
+    <Button @onclick="_=>ClearButton()">@localizer["ClearButtonFilter"]</Button>
+
+}
+
+
+@code {
+    // Injects parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+    // List and metadata Parameters
+    [Parameter, Required] public List<GetClientDTO> allClientsList { get; set; } = default!;
+    [Parameter] public GetTemplateMetadataDTO? templateMetadata { get; set; }
+    // Events
+    [Parameter] public EventCallback<(int, string?, string?, string?, DateTime?, DateTime?)> SearchTemplates { get; set; }
+    [Parameter] public EventCallback ClearFilterTask { get; set; }
+
+    // Vars
+    private bool restFilters = false;
+    private Dictionary<string, int> clientsPair = new();
+    private List<MetadataNameValue> templateState = new();
+    private List<MetadataNameValue> templateType = new();
+
+    // data selected on filter
+    private int? clientID;
+    private int? status, type;
+    private string? authorID;
+    DateTime? startDate, endDate;
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        // Charge Dictionaries
+        foreach (var client in allClientsList)
+        {
+            clientsPair.Add(client.Name ?? "Null name", client.Id);
+        }
+
+        // Charge Metadata in dictionaries
+        if (templateMetadata != null)
+        {
+            templateState = templateMetadata.Status;
+            templateType = templateMetadata.TemplateType;
+        }
+    }
+
+
+    // Buttons
+    private async Task ClearButton()
+    {
+
+        // Clear
+        clientID = null;
+        status = null;
+        type = null;
+        authorID = null;
+        startDate = null;
+        endDate = null;
+
+        await Task.Delay(1);
+        await ClearFilterTask.InvokeAsync();
+
+        // Hide filters
+        restFilters = false;
+        StateHasChanged();
+
+    }
+
+    private async Task SearchButton()
+    {
+        if (clientID == 0 || clientID == null)
+        {
+            throw new Exception("Filter id can't be null or 0");
+        }
+        var filterValues = (clientID.Value, status?.ToString(), type?.ToString(), authorID, startDate, endDate);
+        await SearchTemplates.InvokeAsync(filterValues);
+        StateHasChanged();
+    }
+
+}

@@ -1,0 +1,145 @@
+﻿@* This is a page beavuse is required show all values in the context field type *@
+
+@* Usings and injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.ContextFieldValuesComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources.TabServicesAndFields
+@* Same localizer that tabs services and fields, because is relational *@
+@inject IStringLocalizer<TabServicesAndFieldsResx> localizer 
+@inject IContextFliedsCRUD _contextFieldsCRUD
+@inject IMessageService _message
+
+
+
+
+@* Page config< *@
+@page "/mantenedor/templates/details-{templateId:int}/contextFieldtype-{contextTypeId:int}/Values"
+<PageTitle>ContextValues</PageTitle>
+@attribute [ReuseTabsPage(Ignore = true)]
+
+
+@*Listcontext values*@
+<h4 style="display: flex; justify-content: center; ">@localizer["ContextFieldsValuesPageTitle"]</h4>
+
+@if(isReady)
+{
+    @* List *@
+    <AntList Bordered DataSource="valuesList" ItemLayout="@ListItemLayout.Vertical" Style="margin-top: 50px">
+        <ChildContent Context="item">
+
+            <ListItem Actions="Actions(item)">
+
+                <ListItemMeta Description="@("Created: " + item.CreatedAt.ToString() + " and updated: " + item.UpdatedAt )">
+                    <TitleTemplate>
+                        <span>@item.Name</span>
+                    </TitleTemplate>
+                </ListItemMeta>
+                <Divider Type="DividerType.Vertical" />
+            </ListItem>
+        </ChildContent>
+    </AntList>
+
+    @* Modal to create *@
+    <Divider Orientation="DividerOrientation.Right">
+        <Button OnClick="_=> modalCreateContextField = true">Create new Context field value</Button>
+    </Divider>
+
+    <Modal
+    Visible="@modalCreateContextField"
+    OkText="@("CreateButton")"
+           OnOk="@OnCreateOkButton"
+           OnCancel="@OnCancelModalButton">
+        <Header>
+            <span>Create context field Value</span>
+        </Header>
+        <ChildContent>
+            <CreateContextValue @ref="createContextValue" contextFieldTypeID="contextTypeId"/>
+        </ChildContent>
+    </Modal>
+}
+
+@code {
+    [Parameter] public int templateId { get; set; }
+    [Parameter] public int contextTypeId { get; set; }
+
+    // Vars
+    private bool isReady = false;
+    private bool modalCreateContextField = false;
+
+    // Lists
+    private List<GetContextFielValuesdDTO> valuesList = new();
+
+    // Renders
+    private RenderFragment[] Actions(GetContextFielValuesdDTO item) => new RenderFragment[] {
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddContent(2, "Edit");
+                builder.CloseElement();
+        },
+        builder => {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => _contextFieldsCRUD.SoftDeleteContextFieldValueAsync(item.Id)));
+                builder.AddContent(2, "Delete");
+                builder.CloseElement();
+        }
+    };
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charge data of context field values
+            valuesList = await _contextFieldsCRUD.GetContextFieldValuesByFieldAsync(contextTypeId);
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+
+    // Modal to create and edit
+    private CreateContextValue createContextValue = new();
+    private async Task OnCreateOkButton()
+    {
+        try
+        {
+            var (formValid, createModel) = createContextValue.ValidateAndGetData();
+            if (formValid)
+            {
+                var response = await _contextFieldsCRUD.PostContextFieldValueAsync(createModel);
+                if (response)
+                {
+                    await _message.Success("Exito");
+
+                    createContextValue.Clear();
+                    modalCreateContextField = false;
+
+                    // Reload data of context fields
+                    valuesList = await _contextFieldsCRUD.GetContextFieldValuesByFieldAsync(contextTypeId);
+
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                await _message.Warning(localizer["FormNotValid"].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private void OnCancelModalButton()
+    {
+        createContextValue.Clear();
+        modalCreateContextField = false;
+    }
+
+
+}

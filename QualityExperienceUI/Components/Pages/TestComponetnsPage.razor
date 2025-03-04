@@ -1,0 +1,18 @@
+﻿@using QualityExperienceUI.Components.Pages.SharedComponents
+
+
+<PageTitle>Tests</PageTitle>
+@attribute [ReuseTabsPage(Pin = true, Closable = false, Title ="Tests")]
+@page "/test"
+
+
+<UploadFileComponent TModel="PostGroupDTO"
+                     RowMapper="@((row) => new PostGroupDTO {
+                        Name = row.Cell(1).GetValue<string>(),
+                        Description = row.Cell(2).GetValue<string>(),
+                        TemplateId = row.Cell(3).GetValue<int>(),
+                        Order = row.Cell(4).GetValue<int>(),
+                        AuthorId = row.Cell(5).GetValue<int>(),
+
+                        })"
+                      />

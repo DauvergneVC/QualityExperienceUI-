@@ -1,0 +1,72 @@
+﻿@using QualityExperienceUI.Components.Layout.Components
+@inherits LayoutComponentBase
+
+
+<Layout Id="reuse-tabs-layout">
+    @* SiderBar *@
+    <Sider >
+        <NavMenu />
+    </Sider>
+
+    @* Principal Layout - No count SideBar *@
+    <Layout Class="site-layout">
+
+        <Header Style="display: flex; align-items: center; justify-content: flex-end;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+
+                <LanguageSelector />
+                <NotificationsComponent />
+                <h2 style="color: white; margin: 0 auto;">ATENTO</h2>
+
+
+            </div>
+        </Header>
+
+        @* To show Tabs when navegate in app *@
+        <ReuseTabs Style="margin: 16px;">
+            <Body>
+                @Body
+            </Body>
+
+            @* To customize page content *@
+            <TabPaneTemplate>
+                <Content Class="site-layout-background" Style="padding: 24px;min-height: 280px;">
+                    @context.Body
+                </Content>
+            </TabPaneTemplate>
+
+        </ReuseTabs>
+
+
+    </Layout>
+</Layout>
+
+
+<style>
+    #reuse-tabs-layout .trigger {
+        font-size: 18px;
+        line-height: 64px;
+        padding: 0 24px;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+        #reuse-tabs-layout .trigger:hover {
+            color: #1890ff;
+        }
+
+    #reuse-tabs-layout .logo {
+        height: 32px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 16px;
+    }
+
+    #reuse-tabs-layout .site-layout .site-layout-background {
+        background: #fff;
+    }
+
+    #reuse-tabs-layout .ant-tabs-content {
+        margin-top: -16px;
+        border: 1px solid #f0f0f0;
+    }
+</style>

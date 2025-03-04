@@ -1,0 +1,112 @@
+﻿@* Usings and injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.TemplateDetailsComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources.TemplatesDetails
+@inject IStringLocalizer<TemplatesDetailsResx> localizer
+@inject ITemplatesCRUD _templateCRUD
+@inject IClientsCRUD _clientsCRUD
+@inject IMessageService _message
+
+
+@* Page settings *@
+@page "/mantenedor/templates/details-{templateId:int}"
+<PageTitle>TemplatesDetails</PageTitle>
+@attribute [ReuseTabsPage(Title = "Templates Details")]
+
+
+@* Page content *@
+<h3 style="display: flex; justify-content: center; ">@(localizer["PageTitle"] + " " + templateId) </h3>
+@if (isReady)
+{
+    @* Form to show template data and update *@
+    <Divider Text="@localizer["PageDividerDetails"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
+    <TemplatesDetailsForm localizer="localizer" templateById="templateById" allClients="allClients" templateMetadata="templateMetadata" OnUpdateTemplate="HandleUpdateTemplate"/>
+
+
+    @* Tabs for others subPages *@
+    <Divider Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
+    <Tabs DefaultActiveKey="1">
+        @* tab components are considered pages *@
+        <TabPane Key="1" Tab="@localizer["TabServicensAndFields"]">
+        
+            <TabServicesAndFields templateId="templateId"/>
+
+        </TabPane>
+
+        <TabPane Key="2" Tab="@localizer["TabQuestions"]">
+
+            <TabQuestions templateId="templateId" />
+
+        </TabPane>
+
+        <TabPane Key="3" Tab="@localizer["TabModel"]">
+
+            <TabModel templateId="templateId" />
+
+        </TabPane>
+
+    </Tabs>
+
+}
+
+
+@code {
+    [Parameter] public int templateId { get; set; }
+
+    // General vars
+    private bool isReady = false;
+
+    // To send TempalteDetailsForm
+    private GetTemplateByIdDTO templateById = new();
+    private List<GetClientDTO> allClients = new();
+    private GetTemplateMetadataDTO templateMetadata = new();
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charge template to edit and by id
+            templateById = await _templateCRUD.GetTemplateByIdAsync(templateId);
+            // Charge other data
+            allClients = await _clientsCRUD.GetAllClientsAsync();
+            templateMetadata = await _templateCRUD.GetTemplatesMetadataAsync();
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+
+
+    // Handles Details form Update
+    private async Task HandleUpdateTemplate((bool isFormValid, int templateId, PutTemplatesDTO model) data)
+    {
+        try
+        {
+            if (!data.isFormValid)
+            {
+                await _message.Warning(localizer["PuttemplateModelEmpy"].Value);
+            }
+            else
+            {
+                var result = await _templateCRUD.PutTemplateAsync(data.templateId, data.model);
+                if (result)
+                {
+                    // Reload template
+                    templateById = await _templateCRUD.GetTemplateByIdAsync(templateId);
+
+                    await _message.Success(localizer["UpdatedSuccess"].Value);
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+}

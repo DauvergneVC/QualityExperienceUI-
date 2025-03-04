@@ -1,0 +1,257 @@
+﻿@* Usings and injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.TabServicesAndFieldsComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources.TabServicesAndFields
+@inject IStringLocalizer<TabServicesAndFieldsResx> localizer
+@inject NavigationManager NavigationManager
+@inject IMessageService _message
+@inject IServicesCRUD _servicesCRUD
+@inject ITemplatesCRUD _templatesCRUD
+@inject IContextFliedsCRUD _contextFliedsCRUD
+
+
+@* page content *@
+<h4 style="display: flex; justify-content: center; ">@localizer["TabServicensAndFieldsTitle"]</h4>
+@if (isReady)
+{
+    @* Services *@
+    <Divider Text="@localizer["TabServicensDivider"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
+    <ServicesTransfer localizer="localizer" allServices="allServices" servicesAssociatedByTemplateId="servicesAssociatedByTemplate" OnAsociatedServicesChange="HandleAsociatedServicesChange"/>
+
+    @* Context fields *@
+    <Divider Text="@localizer["TabContextFieldsDivider"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
+    <ContextFieldsTypesList localizer="localizer" allContextFieldsTypes="allContextFieldsTypes" OnNavegateToValues="HandleNavegateToContextValues" OnDeletedButton="HandleDeleteContextField" OnUpdatedButton="HandleOnUpdateContextField" />
+
+    @* Update context field type *@
+    <Modal Visible="showContextFieldEditModal"
+    OkText="@(localizer["EditButton"].Value)"
+    OnOk="@OnUpdateOkButton"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["UpdateContextFieldType"]
+        </Header>
+        <ChildContent>
+            <UpdateContextFieldtype @ref="updateContextFieldtype" localizer="localizer" contextFieldToUpdate="contextFieldTypeToEdit"/>
+        </ChildContent>
+    </Modal>
+
+    @* Create context field type *@
+    <Divider Orientation="DividerOrientation.Right" Type="DividerType.Horizontal">
+        <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="()=>showContextFieldCreateModal = true">
+            @localizer["TabContextCreateFieldsButon"]
+        </Button>
+    </Divider>
+    <Modal Visible="showContextFieldCreateModal"
+    OkText="@(localizer["CreateButton"].Value)"
+    OnOk="@OnCreateOkButton"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["CreateContextFieldType"]
+        </Header>
+        <ChildContent>
+            <CreateContextFieldType @ref="createContextFieldType" localizer="localizer" templateId="templateId"/>
+        </ChildContent>
+    </Modal>
+
+}
+
+@code {
+        // Reusable parameter
+        [Parameter] public int templateId { get; set; }
+
+    // General vars
+    private bool isReady = false;
+    private bool showContextFieldEditModal = false;
+    private bool showContextFieldCreateModal = false;
+
+    // To send by parameters
+    private List<GetServicesDTO> allServices = new();
+    private GetServicesAssociatedByTemplateIdDTO servicesAssociatedByTemplate = new();
+
+    private List<GetContextFieldsTypesDTO> allContextFieldsTypes = new();
+    private GetContextFieldsTypesDTO contextFieldTypeToEdit = new();
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charge data of service transfer
+            allServices = await _servicesCRUD.GetAllServicesAsync();
+            servicesAssociatedByTemplate = await _templatesCRUD.GetAllServicesAssociatedByTemplateIdAsync(templateId);
+
+            // Charge data of context fields
+            allContextFieldsTypes = await _contextFliedsCRUD.GetContextFieldTypesBytemplateAsync(templateId);
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private async Task UpdateHeading()
+    {
+        Thread.Sleep(5000);
+        await _message.Success("Exito");
+    }
+
+    // Modal to update and create context fields
+    private UpdateContextFieldtype updateContextFieldtype = new();
+    private async Task OnUpdateOkButton()
+    {
+        try
+        {
+            var (formValid, contextId, updateModel) = updateContextFieldtype.ObtainFormData();
+            if (formValid)
+            {
+                var response = await _contextFliedsCRUD.PutContextFieldTypeAsync(contextId, updateModel);
+                if (response)
+                {
+                    await _message.Success("Exito");
+
+                    updateContextFieldtype.ClearForm();
+                    showContextFieldEditModal = false;
+
+                    // Reload data of context fields
+                    allContextFieldsTypes = await _contextFliedsCRUD.GetContextFieldTypesBytemplateAsync(templateId);
+
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                await _message.Warning(localizer["FormNotValid"].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private CreateContextFieldType createContextFieldType = new();
+    private async Task OnCreateOkButton()
+    {
+        try
+        {
+            var (formValid, createModel) = createContextFieldType.ObtainFormData();
+            if (formValid)
+            {
+                var response = await _contextFliedsCRUD.PostContextFieldTypeAsync(createModel);
+                if (response)
+                {
+                    await _message.Success("Exito");
+
+                    createContextFieldType.ClearForm();
+                    showContextFieldCreateModal = false;
+
+                    // Reload data of context fields
+                    allContextFieldsTypes = await _contextFliedsCRUD.GetContextFieldTypesBytemplateAsync(templateId);
+
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                await _message.Warning(localizer["FormNotValid"].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private void OnCancelModalButton()
+    {
+        updateContextFieldtype.ClearForm();
+        showContextFieldEditModal = false;
+        createContextFieldType.ClearForm();
+        showContextFieldCreateModal = false;
+    }
+
+
+    // Handles Services transfer
+    private async Task HandleAsociatedServicesChange((string direction, List<int> servicesIds) data)
+    {
+        try
+        {
+            // If the direction is right, add the service to the template
+            if (data.direction == "right")
+            {
+                PostServicesAssociatedByTemplateIdDTO post = new(){
+                        TemplateId = templateId,
+                        ServiceIds = data.servicesIds,
+                };
+                var response = await _templatesCRUD.PostServicesAssociatedByTemplateIdAsync(post);
+                if (response)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                       await _message.Success("Exito");
+                    });
+
+                    StateHasChanged();
+                }
+            }
+            // If the direction is left, remove the service from the template
+            else if (data.direction == "left")
+            {
+                PutServicesAssociatedByTemplateIdDTO put = new()
+                    {
+                        TemplateId = templateId,
+                        ServiceIds = data.servicesIds,
+                    };
+                var response = await _templatesCRUD.PutServicesAssociatedByTemplateIdAsync(put);
+                if (response)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        await _message.Success("Exito");
+                    });
+
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    // Handle Context fields
+    private async Task HandleDeleteContextField(int contextTypeId)
+    { 
+        try
+        {
+            var response = await _contextFliedsCRUD.SoftDeleteContextFieldTypeAsync(contextTypeId);
+            if (response)
+            {
+                await _message.Success("Exito");
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private void HandleOnUpdateContextField(GetContextFieldsTypesDTO contextField)
+    {
+        contextFieldTypeToEdit = contextField;
+        showContextFieldEditModal = true;
+    }
+
+    private void HandleNavegateToContextValues(int contextTypeId)
+    {
+        NavigationManager.NavigateTo($"/mantenedor/templates/details-{templateId}/contextFieldtype-{contextTypeId}/Values");
+    }
+
+
+}

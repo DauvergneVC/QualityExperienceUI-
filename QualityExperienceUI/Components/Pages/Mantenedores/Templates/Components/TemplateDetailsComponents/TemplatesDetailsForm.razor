@@ -1,0 +1,260 @@
+﻿@using System.ComponentModel.DataAnnotations
+
+
+@* Form *@
+<Form @ref="form" Model="model"
+ValidateOnChange="true"
+Layout="FormLayout.Inline"
+Size="FormSize.Small">
+
+    <div style="display: flex">
+        <FormItem Label="Nombre del template">
+            <Input @bind-Value="@model.Name" />
+        </FormItem>
+
+        <FormItem Label="Descripcion del template">
+            <Input @bind-Value="@model.Description" />
+        </FormItem>
+    </div>
+
+
+    <div style="display: flex">
+        <FormItem Label="Estado del template" Style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <Select DataSource="@templateStatusDictionary.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="Select a status"
+                @bind-Value="model.Status"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'
+                Style="width: 150px">
+                    <SelectOptions>
+                        @foreach (var item in templateStatusDictionary)
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+                @* <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["DefaultTooltip"]"> *@
+                @*     <Icon Type="question" /> *@
+                @* </Tooltip> *@
+            </div>
+        </FormItem>
+        <br />
+
+        <FormItem Label="Calculation type" Style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <Select DataSource="@calculationTypeDictionary.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="Select a calculation type"
+                @bind-Value="model.CalculationType"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'
+                Style="width: 150px">
+                    <SelectOptions>
+                        @foreach (var item in calculationTypeDictionary)
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+                @* <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]"> *@
+                @*     <Icon Type="question" /> *@
+                @* </Tooltip> *@
+            </div>
+        </FormItem>
+        <br />
+
+        <FormItem Label="allowAttachment" Style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <Select DataSource="@allowAttachmentDictionary.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="allow attachment"
+                @bind-Value="model.AllowAttachment"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'
+                Style="width: 150px">
+                    <SelectOptions>
+                        @foreach (var item in allowAttachmentDictionary)
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+                @* <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]"> *@
+                @*     <Icon Type="question" /> *@
+                @* </Tooltip> *@
+            </div>
+        </FormItem>
+        <br />
+
+        <FormItem Label="Tipo de feedback" Style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <Select DataSource="@feedbackTypeDictionary.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="feedbackType"
+                @bind-Value="model.FeedbackType"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'
+                Style="width: 150px">
+                    <SelectOptions>
+                        @foreach (var item in feedbackTypeDictionary)
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+                @* <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]"> *@
+                @*     <Icon Type="question" /> *@
+                @* </Tooltip> *@
+            </div>
+        </FormItem>
+        <br />
+
+        <FormItem Label="Template type" Style="display: flex; align-items: center;">
+            <div style="display: flex; align-items: center;">
+                <Select DataSource="@templateTypeDictionary.Values"
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Placeholder="template type"
+                @bind-Value="model.TemplateType"
+                DefaultActiveFirstOption="false"
+                DefaultValue='"0"'
+                Style="width: 150px">
+                    <SelectOptions>
+                        @foreach (var item in templateTypeDictionary)
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+                @* <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["Defaulth"]"> *@
+                @*     <Icon Type="question" /> *@
+                @* </Tooltip> *@
+            </div>
+        </FormItem>
+        <br />
+    </div>
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>ButtonUpdateAction()">
+            Actualizar datos del template
+        </Button>
+    </FormItem>
+</Form>
+
+
+
+@code {
+    // Parameters of models and ids
+    [Parameter] public GetTemplateByIdDTO? templateById { get; set; }
+    [Parameter, Required] public List<GetClientDTO> allClients { get; set; } = default!;
+    [Parameter, Required] public GetTemplateMetadataDTO templateMetadata { get; set; } = default!;
+
+    // Injects parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+
+    // Events
+    [Parameter] public EventCallback<(bool, int, PutTemplatesDTO)> OnUpdateTemplate { get; set; }
+
+    // Vars
+    public int templateId;
+
+    public Dictionary<string, int> clientsPair = new();
+    private Dictionary<string, string> templateStatusDictionary { get; set; } = new();
+    private Dictionary<string, string> templateTypeDictionary { get; set; } = new();
+    private Dictionary<string, string> calculationTypeDictionary { get; set; } = new();
+    private Dictionary<string, string> allowAttachmentDictionary { get; set; } = new();
+    private Dictionary<string, string> feedbackTypeDictionary { get; set; } = new();
+
+    // Form vars
+    private PutTemplatesDTO model { get; set; } = new PutTemplatesDTO();
+    private Form<PutTemplatesDTO> form = new();
+
+
+
+    // Mehtods
+    protected override void OnInitialized()
+    {
+        // Charge mode with data of template
+        if (templateById != null)
+        {
+            templateId = templateById.Id;
+
+            model.Name = templateById.Name;
+            model.Description = templateById.Description;
+
+            // IMPORTANT
+            model.ClientId = 1;
+            // IMPORTANT
+
+            model.Status = GetValueFromList(templateMetadata.Status,templateById.Status);
+            model.CalculationType = GetValueFromList(templateMetadata.CalculationType, templateById.CalculationType);
+            model.AllowAttachment = GetValueFromList(templateMetadata.AllowAttachment, templateById.AllowAttachment);
+            model.FeedbackType = GetValueFromList(templateMetadata.FeedbackType, templateById.FeedbackType);
+            model.TemplateType = GetValueFromList(templateMetadata.TemplateType, templateById.TemplateType);
+        }
+
+        // Charge dictionaries
+        foreach (var client in allClients)
+        {
+            clientsPair.Add(client.Name ?? "defaulth client name", client.Id);
+        }
+        foreach (var type in templateMetadata.Status)
+        {
+            templateStatusDictionary.Add(type.Name, type.Value.ToString());
+        }
+        foreach (var type in templateMetadata.TemplateType)
+        {
+            templateTypeDictionary.Add(type.Name, type.Value.ToString());
+        }
+
+        foreach (var calculations in templateMetadata.CalculationType)
+        {
+            calculationTypeDictionary.Add(calculations.Name, calculations.Value.ToString());
+        }
+
+        foreach (var attachment in templateMetadata.AllowAttachment)
+        {
+            allowAttachmentDictionary.Add(attachment.Name, attachment.Value.ToString());
+        }
+
+        foreach (var feedback in templateMetadata.FeedbackType)
+        {
+            feedbackTypeDictionary.Add(feedback.Name, feedback.Value.ToString());
+        }
+    }
+    // To obtain id by Name of NameValuePair
+    private string GetValueFromList(List<MetadataNameValue>? list, string? name)
+    {
+        if (list == null || name == null)
+        {
+            return "0"; // default value
+        }
+
+        var item = list.FirstOrDefault(x => x.Name == name);
+        return item?.Value.ToString() ?? "0";
+    }
+
+
+    // Buttons
+    private async Task ButtonUpdateAction()
+    {
+        if (!form.Validate())
+        {
+            await OnUpdateTemplate.InvokeAsync((false, templateId, model));
+        }
+        else
+        {
+            await OnUpdateTemplate.InvokeAsync((true, templateId, model));
+        }
+    }
+}

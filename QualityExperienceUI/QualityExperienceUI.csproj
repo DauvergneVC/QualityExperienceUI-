@@ -1,0 +1,91 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AntDesign" Version="1.2.0" />
+    <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.2" />
+    <PackageReference Include="Refit.HttpClientFactory" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Local\Resources\LayoutResources\LayoutRes.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>LayoutRes.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TemplatesResources\TabModel\TabModelResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TabModelResx.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TemplatesResources\TabQuestions\TabQuestionsResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TabQuestionsResx.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TemplatesResources\TabServicesAndFields\TabServicesAndFieldsResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TabServicesAndFieldsResx.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TemplatesResources\TemplateResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TemplateResx.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TemplatesResources\TemplatesDetails\TemplatesDetailsResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TemplatesDetailsResx.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Local\Resources\TooltipsResources\TooltipsResx.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>TooltipsResx.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Local\Resources\LayoutResources\LayoutRes.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>LayoutRes.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TemplatesResources\TabModel\TabModelResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TabModelResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TemplatesResources\TabQuestions\TabQuestionsResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TabQuestionsResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TemplatesResources\TabServicesAndFields\TabServicesAndFieldsResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TabServicesAndFieldsResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TemplatesResources\TemplateResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TemplateResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TemplatesResources\TemplatesDetails\TemplatesDetailsResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TemplatesDetailsResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Local\Resources\TooltipsResources\TooltipsResx.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>TooltipsResx.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Pages\Mantenedores\Templates\Components\SharedQuestionsMaqueta\" />
+    <Folder Include="Components\Pages\NotificationsAndMessages\Components\" />
+    <Folder Include="Data\Services\UploadServices\" />
+  </ItemGroup>
+
+</Project>

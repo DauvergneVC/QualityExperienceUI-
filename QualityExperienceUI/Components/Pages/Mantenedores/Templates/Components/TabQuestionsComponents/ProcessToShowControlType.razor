@@ -1,0 +1,82 @@
+﻿<div>
+    @switch (questionItem.ControlType)
+    {
+        case "Text":
+            <div style="display:flex;">
+                <Input Placeholder="@questionItem.Label" TValue="string" />
+            </div>
+            break;
+
+        case "Number":
+            <label>@questionItem.Label</label>
+            <AntDesign.InputNumber TValue="int" />
+            break;
+
+        case "DropdownSingle":
+            <label>@questionItem.Label</label>
+            <Dropdown>
+                <Overlay>
+                    <Menu>
+
+                        @if (allValuesDictionary.ContainsKey(Id))
+                        {
+                            @foreach (var value in allValuesDictionary[Id])
+                            {
+                                <MenuItem>
+                                    @value.Value
+                                </MenuItem>
+                            }
+                        }
+
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <a class="ant-dropdown-link" @onclick:preventDefault>
+                        Hover me <Icon Type="@IconType.Outline.Down" />
+                    </a>
+                </ChildContent>
+            </Dropdown>
+            break;
+
+        case "DropdownMultiple":
+            <label>@questionItem.Label</label>
+            <Dropdown>
+                <Overlay>
+                    <Menu>
+
+                        @if (allValuesDictionary.ContainsKey(Id))
+                        {
+                            @foreach (var value in allValuesDictionary[Id])
+                            {
+                                <MenuItem>
+                                    @value.Value
+                                </MenuItem>
+                            }
+                        }
+                        
+
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <a class="ant-dropdown-link" @onclick:preventDefault>
+                        Hover me <Icon Type="@IconType.Outline.Down" />
+                    </a>
+                </ChildContent>
+            </Dropdown>
+            break;
+        default:
+            <label>@questionItem.Label</label>
+            <span>Control no soportado: @questionItem.ControlType</span>
+            break;
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    [Parameter] public GetQuestionsDTO.QuestionItemResponse questionItem { get; set; } = new();
+    [Parameter] public Dictionary<int, List<GetQuestionItemListValuesDTO>> allValuesDictionary { get; set; }
+
+}

@@ -1,0 +1,55 @@
+﻿@using QualityExperienceUI.Data.Validators
+
+
+@* Form *@
+<Form @ref="form"
+      Model="@model"
+      ValidateOnChange="true"
+      Layout="FormLayout.Vertical"
+      Size="FormSize.Small">
+
+
+    <FormItem Label="Value name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="model.Value" />
+    </FormItem>
+
+    <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="model.Order" />
+    </FormItem>
+
+</Form>
+
+
+@code {
+    [Parameter] public int questionItemId { get; set; }
+
+    private PostQuestionItemListValueDTO model { get; set; } = new PostQuestionItemListValueDTO();
+    private Form<PostQuestionItemListValueDTO> form = new();
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        model.QuestionItemId = questionItemId;
+    }
+
+
+    public (bool formValidate, PostQuestionItemListValueDTO value) ValidateAndGetData()
+    {
+        if (form != null)
+        {
+            if (form.Validate())
+            {
+                return (true, model);
+            }
+        }
+
+        return (false, model);
+    }
+
+
+    public void ClearForm()
+    {
+        form.Reset();
+    }
+}

@@ -1,0 +1,371 @@
+﻿@* Usings and injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.TabQuestionsComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources.TabQuestions
+@inject IStringLocalizer<TabQuestionsResx> localizer
+@inject IMessageService _message
+@inject IQuestionsCRUD _questionsCRUD
+@inject IGroupsCRUD _groupsCRUD
+
+
+@* page content *@
+<h4 style="display: flex; justify-content: center; ">@localizer["TabQuestionsTitle"]</h4>
+@if(isReady)
+{
+    @* Create question *@
+    <Divider Orientation="DividerOrientation.Right" Type="DividerType.Horizontal" Style="margin-top: 50px" >
+        <Button OnClick="() => createQuestionModalVisible = true" Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" Style="margin-left: 24px"> @localizer["TabListCreateQuestionsDivider"] </Button>
+    </Divider>
+
+    <Modal Visible="createQuestionModalVisible"
+    OkText="@(localizer["CreateButton"].Value)"
+    OnOk="@OnCreateOkButton"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["TabListCreateQuestionsDivider"]
+        </Header>
+        <ChildContent>
+            <CreateQuestion @ref="createQuestion" templateId="templateId"/>
+        </ChildContent>
+    </Modal>
+
+
+    @* List questions *@
+    <Divider Text="@localizer["TabListQuestionsDivider"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" />
+    <ListAndAddQuestionsElements localizer="localizer" allQuestions="allQuestions" questionEvaluationsControls="questionEvaluationsControls" templateId="templateId" groupsOfThisTemplate="allGroupsOfThisTemplate" allQuestionsMetadata="questionsMetadata" listValues="listValues" allValuesDictionary="allValuesDictionary"
+    OnUpdateQuestion="HandleOnUpdateQuestion" OnCreateQuestionItemListValue="OnCreateQuestionItemListValueOpen" OnCreateQuestionItem="HandleOnCreateQuestionItem" OnModifyAllQuestion="HandleOnModifyAllQuestion" />
+
+
+    @* Create question item *@
+    <Modal Visible="createQuestionItemModal"
+    OkText="@(localizer["CreateQuestionItemButton"].Value)"
+    OnOk="@OnCreateQuestionItem"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["TabListCreateQuestionsListValueModal"]
+        </Header>
+        <ChildContent>
+            <CreateQuestionItem @ref="createQuestionItem" questionId="questionIdToCreateitem" questionMetadataDTO="questionsMetadata"/>
+        </ChildContent>
+    </Modal>
+
+
+    @* Create questionItemList value *@
+    <Modal Visible="createQuestionItemListValueModal"
+    OkText="@(localizer["CreateItemValueButton"].Value)"
+    OnOk="@OnCreateQuestionItemListValueOkButton"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["TabListCreateQuestionsListValueModal"]
+        </Header>
+        <ChildContent>
+            <CreateQuestionItemListValue @ref="createQuestionItemListValue" questionItemId="questionItemIdToAddValues" />
+        </ChildContent>
+    </Modal>
+
+
+    @* Modify all question data *@
+    <Modal Visible="modifyAllQuestionDataModal"
+    OkText="@(localizer["ModifyAllQuestion"].Value)"
+           OnOk="@OnModifyAllQuestionOkButton"
+    OnCancel="@OnCancelModalButton">
+
+        <Header>
+            @localizer["ModifyAllQuestion"]
+        </Header>
+        <ChildContent>
+            <ModifyAllQuestion localizer="localizer" templateId="templateId"
+            questionMetadataDTO="questionsMetadata" questionsEvaluationControls="questionEvaluationsControls" groupsOfThisTemplate="allGroupsOfThisTemplate" questionToEdit="questionToEdit"/>
+        </ChildContent>
+    </Modal>
+}
+
+
+
+@code {
+    /// <summary>
+    /// Agreggar editar pregunta completa
+    /// </summary>
+
+    // Reusable parameters
+    [Parameter] public int templateId { get; set; }
+
+    // General vars
+    private bool isReady = false;
+    private bool createQuestionModalVisible = false;
+    private bool createQuestionItemListValueModal = false;
+    private bool createQuestionItemModal = false;
+    private bool modifyAllQuestionDataModal = false;
+
+    private int questionItemIdToAddValues = 0;
+    private int questionIdToCreateitem = 0;
+
+    // To send by parameters
+    private List<GetQuestionsDTO> allQuestions = new();
+    private GetQuestionMetadataDTO questionsMetadata = new();
+    private List<GetQuestionsEvaluationControlsDTO> questionEvaluationsControls = new();
+    private List<GetGroupsByTemplateDTO> allGroupsOfThisTemplate = new();
+
+    private GetQuestionsDTO questionToEdit = new();
+    private List<GetQuestionItemListValuesDTO> listValues = new();
+    private Dictionary<int, List<GetQuestionItemListValuesDTO>> allValuesDictionary = new();
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charge all questions, groups and metadata
+            allQuestions = await _questionsCRUD.GetAllQuestionsAsync();
+            allGroupsOfThisTemplate = await _groupsCRUD.GetGroupsByTemplateAsync(templateId);
+            questionEvaluationsControls = await _questionsCRUD.GetAllQuestionsEvaluationControlsAsync();
+            questionsMetadata = await _questionsCRUD.GetQuestionMetadataAsync();
+
+            // Charge questionListValues
+            foreach (var question in allQuestions)
+            {
+                foreach(var questionItem in question.QuestionItems ?? default!)
+                {
+                    if (questionItem.ControlType == "DropdownSingle" || questionItem.ControlType == "DropdownMultiple")
+                    {
+                        listValues = await _questionsCRUD.GetAllQuestionItemListValuesFromQuestionItemAsync(questionItem.Id);
+
+                        allValuesDictionary.Add(questionItem.Id, listValues);
+                    }
+                }
+            }
+
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+
+    }
+
+
+    // General Modal control
+    private void OnCancelModalButton()
+    {
+        createQuestion.ClearForm();
+        createQuestionModalVisible = false;
+
+        createQuestionItemListValue.ClearForm();
+        createQuestionItemListValueModal = false;
+
+        createQuestionItem.ClearForm();
+        createQuestionItemModal = false;
+
+        modifyAllQuestion.ClearForm();
+        modifyAllQuestionDataModal = false;
+    }
+
+    // Modal to create question
+    private CreateQuestion createQuestion = new();
+    private async Task OnCreateOkButton ()
+    {
+        try
+        {
+            var (formValid, createModel) = createQuestion.ValidateAndGetData();
+            if (formValid)
+            {
+                var response = await _questionsCRUD.PostQuestionAsync(createModel);
+                if (response)
+                {
+                    await _message.Success(localizer["Success"].Value);
+
+                    createQuestion.ClearForm();
+                    createQuestionModalVisible = false;
+
+                    // Reload data of context fields
+                    allQuestions = await _questionsCRUD.GetAllQuestionsAsync();
+
+                    StateHasChanged();
+                }
+            }
+            else
+            {
+                await _message.Warning(localizer["FormNotValid"].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    // Modal to create questionItemList value
+    private CreateQuestionItemListValue createQuestionItemListValue = new();
+    private async Task OnCreateQuestionItemListValueOkButton()
+    {
+        try
+        {
+            var (formValid, createModel) = createQuestionItemListValue.ValidateAndGetData();
+            if (formValid)
+            {
+                var response = await _questionsCRUD.PostQuestionItemListValueAsync(createModel);
+                if (response)
+                {
+                    createQuestionItemListValue.ClearForm();
+                    createQuestionItemListValueModal = false;
+
+                    // Reload data of context fields
+                    allQuestions = await _questionsCRUD.GetAllQuestionsAsync();
+
+                    allValuesDictionary.Clear();
+
+                    // Charge questionListValues
+                    foreach (var question in allQuestions)
+                    {
+                        foreach (var questionItem in question.QuestionItems ?? default!)
+                        {
+                            if (questionItem.ControlType == "DropdownSingle" || questionItem.ControlType == "DropdownMultiple")
+                            {
+                                listValues = await _questionsCRUD.GetAllQuestionItemListValuesFromQuestionItemAsync(questionItem.Id);
+
+                                allValuesDictionary.Add(questionItem.Id, listValues);
+                            }
+                        }
+                    }
+
+                    await _message.Success(localizer["Success"].Value);
+
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    // Modal to create question item
+    private CreateQuestionItem createQuestionItem = new();
+    private async Task OnCreateQuestionItem()
+    {
+        try
+        {
+            var (formValid, createModel) = createQuestionItem.ValidateAndGetData();
+            if (formValid)
+            {
+                var response = await _questionsCRUD.PostQuestionItemAsync(createModel);
+                if (response)
+                {
+                    allQuestions = await _questionsCRUD.GetAllQuestionsAsync();
+
+                    createQuestionItem.ClearForm();
+                    await _message.Success(localizer["Success"].Value);
+                    createQuestionItemModal = false;
+
+
+                    StateHasChanged();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    // Modal to edit all question
+    private ModifyAllQuestion modifyAllQuestion = new();
+    private async Task OnModifyAllQuestionOkButton()
+    {
+        try
+        {
+            var (formValid, model) = modifyAllQuestion.ValidateAndGetData();
+            if (formValid)
+            {
+                bool result = await _questionsCRUD.PutQuestionAsync(questionToEdit.Id, model);
+
+                if (result)
+                {
+                    await _message.Success(localizer["UpdateQuestionSuccess"].Value);
+                    modifyAllQuestion.ClearForm();
+                    modifyAllQuestionDataModal = false;
+
+                    allQuestions = await _questionsCRUD.GetAllQuestionsAsync();
+                    StateHasChanged();
+
+                }
+                else
+                {
+                    await _message.Error(localizer["UpdateQuestionError"].Value);
+                }
+            }
+            else
+            {
+                await _message.Warning(localizer["FormNotValid"].Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    // Handles ListAndAddQuestionsElements
+    private async Task HandleOnUpdateQuestion((int questionId, GetQuestionsDTO question, int? newGroupId, int? newEvaluationControlID) data)
+    {
+        try
+        {
+            PutQuestionsDTO questionPut = new()
+                {
+                    GroupId = data.newGroupId == 0 ? data.question.Id : data.newGroupId,
+                    SubGroupId = data.question.SubGroupId == 0 ? null : data.question.SubGroupId,
+                    IndicatorId = null, //Data no has value for this
+                    Name = data.question.Name,
+                    Description = data.question.Description,
+                    Order = data.question.Order,
+                    CriticalQuestionValue = data.question.CriticalQuestionValue,
+                    Type = data.question.Type,
+                    Status = data.question.Status,
+                    Critical = data.question.Critical,
+                    CalculationType = data.question.CalculationType,
+                    GlobalWeight = data.question.GlobalWeight,
+                    IndicatorWeight = data.question.IndicatorWeight,
+                    QuestionEvaluationControlId = data.newEvaluationControlID == 0 ? data.question.QuestionEvaluationControl?.Id : data.newEvaluationControlID,
+
+                };
+
+            bool result = await _questionsCRUD.PutQuestionAsync(data.questionId, questionPut);
+
+            if (result)
+            {
+                await _message.Success(localizer["UpdateQuestionSuccess"].Value);
+            }
+            else
+            {
+                await _message.Error(localizer["UpdateQuestionError"].Value);
+            }
+        }
+        catch(Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private void HandleOnCreateQuestionItem(int questionId)
+    {
+        questionIdToCreateitem = questionId;
+        createQuestionItemModal = true;
+    }
+
+    private void OnCreateQuestionItemListValueOpen(int id)
+    {
+        questionItemIdToAddValues = id;
+        createQuestionItemListValueModal = true;
+    }
+
+    private void HandleOnModifyAllQuestion(GetQuestionsDTO question)
+    {
+        questionToEdit = question;
+        modifyAllQuestionDataModal = true;
+    }
+}

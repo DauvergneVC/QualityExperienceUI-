@@ -1,0 +1,227 @@
+﻿@using ClosedXML.Excel
+@using System.Text.Json
+@using System.Globalization
+@using System.Reflection
+@using System.Text
+@using Microsoft.AspNetCore.Components.Forms
+@typeparam TModel where TModel : class, new()
+@inject IJSRuntime JsRuntime
+
+<InputFile OnChange="@LoadFile" accept=".csv,.xlsx" />
+
+@code {
+    [Parameter]
+    public int MaxFields { get; set; } = 1500;
+
+    [Parameter]
+    public Func<IXLRow, TModel>? RowMapper { get; set; } // para columnas de archivo excel (yo especifico)
+
+    [Parameter]
+    public Func<string[], TModel>? CsvRowMapper { get; set; } // para columnas de archivo csv (yo especifico)
+
+    [Parameter]
+    public EventCallback<List<TModel>> OnDataLoaded { get; set; }
+
+    [Parameter]
+    public bool HasHeaderRow { get; set; } = true;
+
+    [Parameter]
+    public char CsvDelimiter { get; set; } = ',';
+
+    private async Task LoadFile(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            string jsonResult;
+            List<TModel> data;
+
+            if (file.Name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            {
+                data = await ConvertCsvToData(file);
+            }
+            else if (file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+                     file.Name.EndsWith(".xls", StringComparison.OrdinalIgnoreCase))
+            {
+                data = await ConvertExcelToData(file);
+            }
+            else
+            {
+                throw new InvalidOperationException("Tipo de archivo no soportado. Por favor use .csv, .xlsx o .xls");
+            }
+
+            jsonResult = JsonSerializer.Serialize(data);
+            await JsRuntime.InvokeVoidAsync("console.log", jsonResult);
+
+            
+            // await OnDataLoaded.InvokeAsync(data);
+        }
+        catch (Exception ex)
+        {
+            await JsRuntime.InvokeVoidAsync("console.log", ex.Message);
+        }
+    }
+
+    private async Task<List<TModel>> ConvertExcelToData(IBrowserFile file)
+    {
+        if (RowMapper == null)
+        {
+            throw new InvalidOperationException("RowMapper debe ser proporcionado para archivos Excel");
+        }
+
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        using var workbook = new XLWorkbook(memoryStream);
+        var worksheet = workbook.Worksheet(1);
+
+        // Skip header row if indicated
+        var rows = HasHeaderRow ? worksheet.RowsUsed().Skip(1) : worksheet.RowsUsed();
+
+        var data = new List<TModel>();
+        foreach (var row in rows)
+        {
+            var item = RowMapper(row);
+            data.Add(item);
+        }
+
+        return data;
+    }
+
+    private async Task<List<TModel>> ConvertCsvToData(IBrowserFile file)
+    {
+        if (CsvRowMapper == null)
+        {
+            throw new InvalidOperationException("CsvRowMapper debe ser proporcionado para archivos CSV");
+        }
+
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        using var reader = new StreamReader(memoryStream);
+        var data = new List<TModel>();
+        string? line;
+        bool isFirstLine = true;
+
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            // Skip header if indicated
+            if (isFirstLine && HasHeaderRow)
+            {
+                isFirstLine = false;
+                continue;
+            }
+
+            var values = line.Split(CsvDelimiter);
+            var item = CsvRowMapper(values);
+            data.Add(item);
+
+            isFirstLine = false;
+        }
+
+        return data;
+    }
+
+    // Método de ayuda que usa reflexión para mapear automáticamente (alternativa a proveer mappers personalizados)
+    public static Func<IXLRow, T> CreateDefaultExcelMapper<T>() where T : class, new()
+    {
+        return (row) =>
+        {
+            var instance = new T();
+            var properties = typeof(T).GetProperties();
+
+            for (int i = 0; i < properties.Length && i < row.CellsUsed().Count(); i++)
+            {
+                var property = properties[i];
+                var cell = row.Cell(i + 1);
+
+                if (property.PropertyType == typeof(string))
+                {
+                    property.SetValue(instance, cell.GetString());
+                }
+                else if (property.PropertyType == typeof(int) || property.PropertyType == typeof(int?))
+                {
+                    if (int.TryParse(cell.GetString(), out int intValue))
+                    {
+                        property.SetValue(instance, intValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(double) || property.PropertyType == typeof(double?))
+                {
+                    if (double.TryParse(cell.GetString(), out double doubleValue))
+                    {
+                        property.SetValue(instance, doubleValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                {
+                    if (DateTime.TryParse(cell.GetString(), out DateTime dateValue))
+                    {
+                        property.SetValue(instance, dateValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
+                {
+                    if (bool.TryParse(cell.GetString(), out bool boolValue))
+                    {
+                        property.SetValue(instance, boolValue);
+                    }
+                }
+            }
+
+            return instance;
+        };
+    }
+
+    public static Func<string[], T> CreateDefaultCsvMapper<T>() where T : class, new()
+    {
+        return (values) =>
+        {
+            var instance = new T();
+            var properties = typeof(T).GetProperties();
+
+            for (int i = 0; i < properties.Length && i < values.Length; i++)
+            {
+                var property = properties[i];
+                var value = values[i];
+
+                if (property.PropertyType == typeof(string))
+                {
+                    property.SetValue(instance, value);
+                }
+                else if (property.PropertyType == typeof(int) || property.PropertyType == typeof(int?))
+                {
+                    if (int.TryParse(value, out int intValue))
+                    {
+                        property.SetValue(instance, intValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(double) || property.PropertyType == typeof(double?))
+                {
+                    if (double.TryParse(value, out double doubleValue))
+                    {
+                        property.SetValue(instance, doubleValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(DateTime) || property.PropertyType == typeof(DateTime?))
+                {
+                    if (DateTime.TryParse(value, out DateTime dateValue))
+                    {
+                        property.SetValue(instance, dateValue);
+                    }
+                }
+                else if (property.PropertyType == typeof(bool) || property.PropertyType == typeof(bool?))
+                {
+                    if (bool.TryParse(value, out bool boolValue))
+                    {
+                        property.SetValue(instance, boolValue);
+                    }
+                }
+            }
+
+            return instance;
+        };
+    }
+}

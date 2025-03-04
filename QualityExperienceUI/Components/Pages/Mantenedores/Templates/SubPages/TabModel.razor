@@ -1,0 +1,234 @@
+﻿@* Usings and injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.TabQuestionsComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources.TabModel
+@inject IStringLocalizer<TabModelResx> localizer
+@inject IMessageService _message
+@inject IQuestionsCRUD _questionsCRUD
+@inject IContextFliedsCRUD _contextFieldsCRUD
+
+
+@* page content *@
+<h4 style="display: flex; justify-content: center; ">@localizer["TabModelTitle"]</h4>
+@if(isReady)
+{
+    @* Collapse *@
+    <Collapse>
+        @foreach (var group in questions)
+        {
+            <Panel Key="@group.Id.ToString()">
+                <HeaderTemplate>
+                    <div style="display: flex; justify-content: space-between; align-items: center">
+                        <span>@group.Name</span>
+                        @if (HasRadioQuestions(group))
+                        {
+                            <RadioGroup Options="@YesNo"
+                            Value="@groupResponses[group.Id]"
+                            OnChange="@(async (string value) => await HandleGroupRadioChange(group.Id, value))" />
+                        }
+                    </div>
+                </HeaderTemplate>
+                <ChildContent>
+                    @foreach (var question in group.Questions ?? default!)
+                    {
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
+                            <p style="margin: 0">@question.Name</p>
+                            <div style="display: flex; justify-content: right; padding-right: 20px">
+                                @if (IsRadioQuestion(question))
+                                {
+                                    @if (!questionResponses.ContainsKey(question.Id))
+                                    {
+                                        questionResponses[question.Id] = string.Empty;
+                                    }
+                                    <RadioGroup Options="@YesNo"
+                                    Value="@questionResponses[question.Id]"
+                                    OnChange="@(async (string value) => await HandleQuestionRadioChange(group.Id, question.Id, value))" />
+                                }
+                                else
+                                {
+                                    @foreach (var questionItem in question.QuestionItems ?? default!)
+                                    {
+                                        <label>@questionItem.Label</label>
+                                        <p style="margin-right: 15px">@questionItem.ControlType</p>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <Divider />
+                    }
+                </ChildContent>
+            </Panel>
+        }
+    </Collapse>
+
+    @* Context in combobox *@
+    <div>
+        @foreach (var contextField in contextFieldsTypes)
+        {
+            @if(contextField.Visible == true)
+            {
+                @* @contextField.MaxLength *@
+                <label style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space:nowrap">@contextField.Name</label>
+
+                <Select DataSource="allValuesNamesOfContextTypes[contextField.Id]"
+                        TItemValue="string"
+                        TItem="string"
+                        EnableSearch
+                        Style="width: 200px"
+                        DefaultActiveFirstOption="false">
+                    <SelectOptions>
+                        @foreach (var item in allValuesNamesOfContextTypes[contextField.Id])
+                        {
+                            <SelectOption TItemValue="string" TItem="string" Value="@item" Label="@item" />
+                        }
+                    </SelectOptions>
+                </Select>
+
+                <br />
+                <br />
+            }
+        }
+    </div>
+
+}
+
+
+@code {
+    // Reusable parameters
+    [Parameter] public int templateId { get; set; }
+
+    // General vars
+    private bool isReady = false;
+
+    // List vars
+    private List<GetQuestionsByTemplateIdDTO> questions = new();
+    private Dictionary<int, string> groupResponses = new();
+    private Dictionary<int, string> questionResponses = new();
+
+    private List<GetContextFieldsTypesDTO> contextFieldsTypes = new();
+    private Dictionary<int, List<string>> allValuesNamesOfContextTypes = new();
+
+    // Radio
+    private RadioOption<string>[] YesNo = new[]
+    {
+        new RadioOption<string> { Value = "Yes", Label = "Yes" },
+        new RadioOption<string> { Value = "No", Label = "No" }
+    };
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Charge data of questions
+            questions = await _questionsCRUD.GetAllQuestionDataByTemplateIdAsync(templateId);
+
+            foreach (var group in questions)
+            {
+                groupResponses[group.Id] = string.Empty;
+
+                if (group.Questions != null)
+                {
+                    foreach (var question in group.Questions)
+                    {
+                        if (IsRadioQuestion(question))
+                        {
+                            questionResponses[question.Id] = string.Empty;
+                        }
+                    }
+                }
+            }
+
+
+            // Charge data of context types and values
+            contextFieldsTypes = await _contextFieldsCRUD.GetContextFieldTypesBytemplateAsync(templateId);
+            // To charge dictionary with values and id
+            foreach (var contextType in contextFieldsTypes)
+            {
+                var temporalValuesList = await _contextFieldsCRUD.GetContextFieldValuesByFieldAsync(contextType.Id);
+                var ListOfNames = new List<string> ();
+                foreach (var name in temporalValuesList)
+                {
+                    ListOfNames.Add(name.Name?? "Defaulth name");
+                }
+                allValuesNamesOfContextTypes.Add(contextType.Id, ListOfNames);
+            }
+
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+
+    private bool IsRadioQuestion(GetQuestionsByTemplateIdDTO.QuestionResponse question)
+    {
+        return question.QuestionEvaluationControl?.EvaluationControl?.ToLower() == "radio";
+    }
+
+    private bool HasRadioQuestions(GetQuestionsByTemplateIdDTO group)
+    {
+        return group.Questions?.Any(q => IsRadioQuestion(q)) ?? false;
+    }
+
+    private async Task HandleGroupRadioChange(int groupId, string value)
+    {
+        try
+        {
+            groupResponses[groupId] = value;
+
+            var group = questions.FirstOrDefault(g => g.Id == groupId);
+            if (group?.Questions != null)
+            {
+                foreach (var question in group.Questions)
+                {
+                    if (IsRadioQuestion(question))
+                    {
+                        await HandleQuestionRadioChange(groupId, question.Id, value, true);
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Error al actualizar el grupo: {ex.Message}");
+        }
+    }
+
+    private async Task HandleQuestionRadioChange(int groupId, int questionId, string value, bool isFromGroup = false)
+    {
+        try
+        {
+            questionResponses[questionId] = value;
+
+            if (!isFromGroup)
+            {
+                // Verificar si todas las preguntas de tipo Radio del grupo tienen el mismo valor
+                var group = questions.FirstOrDefault(g => g.Id == groupId);
+                if (group?.Questions != null)
+                {
+                    var radioQuestions = group.Questions.Where(IsRadioQuestion).ToList();
+                    if (radioQuestions.Any())
+                    {
+                        bool allSameValue = radioQuestions.All(q =>
+                            questionResponses.ContainsKey(q.Id) &&
+                            questionResponses[q.Id] == value);
+
+                        groupResponses[groupId] = allSameValue ? value : string.Empty;
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Error al actualizar la pregunta: {ex.Message}");
+        }
+    }
+}

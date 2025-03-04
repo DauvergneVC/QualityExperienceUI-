@@ -1,0 +1,188 @@
+﻿@using QualityExperienceUI.Local.Resources.LayoutResources
+@inject IStringLocalizer<LayoutRes> localizer
+@inject NavigationManager NavigationManager
+@inherits AntDomComponentBase
+
+<Space>
+    <SpaceItem>
+
+        <Dropdown Overlay=@menu Placement="Placement.Bottom">
+            <Badge Count="@_count" Size="BadgeSize.Small" Offset="(10, -5)">
+                <Icon Type="bell" Theme="IconThemeType.Outline" Style="color: white; font-size: 24px;" />
+            </Badge>
+        </Dropdown>
+
+    </SpaceItem>
+</Space>
+
+@code {
+    RenderFragment menu =>
+    @<Tabs DefaultActiveKey="1" Style="background-color: white; color: #001529; width: 350px; padding: 20px; padding-top: 5px; border-radius: 10px">
+
+        <TabPane Key="1" Tab="tabNotifications">
+            <AntList DataSource="@_notifications" Bordered>
+                <ChildContent Context="item">
+                    <ListItem>
+                        <ListItemMeta Description="@item.Description">
+                            <TitleTemplate>
+                            <Avatar Src="@item.Avatar"></Avatar>
+                                <a href="https://ng.ant.design">@item.Title</a>
+                                <p>@item.DateTime.ToString()</p>
+                            </TitleTemplate>
+                        </ListItemMeta>
+                    </ListItem>
+                </ChildContent>
+            </AntList>
+
+            <Button OnClick="@(()=> ClickViewAllButton())">@_viewAll</Button>
+        </TabPane>
+
+        <TabPane Key="2" Tab="tabMessages">
+            <AntList DataSource="@_messages" Bordered>
+                <ChildContent Context="item">
+                    <ListItem>
+                        <ListItemMeta Description="@item.Description">
+                            <TitleTemplate>
+                                <a href="https://ng.ant.design">@item.Title</a>
+                            </TitleTemplate>
+                        </ListItemMeta>
+                    </ListItem>
+                </ChildContent>
+            </AntList>
+
+            <Button OnClick="@(()=> ClickViewAllButton())">@_viewAll</Button>
+        </TabPane>
+    </Tabs>
+    ;
+
+    /// <summary>
+    /// AGREGAR boton para mostrar todo -> rediereccion a pagina nueva
+    /// mostrar mazxximo 5(.variable para modificar)mensajes y notificaciones
+    /// </summary>
+
+    private int _count = 0;
+    private int _maxDisplayItems = 4;
+    string tabNotifications = "", tabMessages = "", _viewAll = "";
+    private static List<NoticeItem> _notifications = new List<NoticeItem>();
+    private static List<NoticeItem> _messages = new List<NoticeItem>();
+
+    protected override void OnInitialized()
+    {
+        tabNotifications = localizer["NotificationsTabNotification"].Value;
+        tabMessages = localizer["NotificationsTabMessages"].Value;
+        _viewAll = localizer["ViewAll"].Value;
+
+        // Predefined notifications
+        _notifications = new List<NoticeItem>
+        {
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "New project created",
+                Description = "Project XYZ has been created successfully",
+                DateTime = DateTime.Now.AddHours(-2),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "System update",
+                Description = "System will be updated tomorrow at 2:00 AM",
+                DateTime = DateTime.Now.AddHours(-5),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "System update",
+                Description = "System will be updated tomorrow at 2:00 AM",
+                DateTime = DateTime.Now.AddHours(-5),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "System update",
+                Description = "System will be updated tomorrow at 2:00 AM",
+                DateTime = DateTime.Now.AddHours(-5),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "System update",
+                Description = "System will be updated tomorrow at 2:00 AM",
+                DateTime = DateTime.Now.AddHours(-5),
+                Read = false
+            }
+        };
+
+        // Predefined messages
+        _messages = new List<NoticeItem>
+        {
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "James Smith",
+                Description = "Please review the latest report",
+                DateTime = DateTime.Now.AddHours(-1),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "Maria Rodriguez",
+                Description = "When is our next meeting scheduled?",
+                DateTime = DateTime.Now.AddHours(-3),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "Maria Rodriguez",
+                Description = "When is our next meeting scheduled?",
+                DateTime = DateTime.Now.AddHours(-3),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "Maria Rodriguez",
+                Description = "When is our next meeting scheduled?",
+                DateTime = DateTime.Now.AddHours(-3),
+                Read = false
+            },
+            new NoticeItem
+            {
+                Avatar = "https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png",
+                Title = "Maria Rodriguez",
+                Description = "When is our next meeting scheduled?",
+                DateTime = DateTime.Now.AddHours(-3),
+                Read = false
+            }
+        };
+
+        // Limit displayed items to _maxDisplayItems
+        _notifications = _notifications.Take(_maxDisplayItems).ToList();
+        _messages = _messages.Take(_maxDisplayItems).ToList();
+
+        // Calculate badge count (unread notifications + messages)
+        _count = _notifications.Count(n => !n.Read) + _messages.Count(m => !m.Read);
+    }
+
+
+    private void ClickViewAllButton()
+    {
+        NavigationManager.NavigateTo($"/notifications-messages");
+    }
+
+    // Notice item class to represent notification data
+    public class NoticeItem
+    {
+        public string? Avatar { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public DateTime DateTime { get; set; }
+        public bool Read { get; set; }
+    }
+}

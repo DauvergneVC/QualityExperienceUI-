@@ -1,0 +1,233 @@
+﻿@using QualityExperienceUI.Data.Validators
+
+
+@* Form *@
+@if(ready)
+{
+    <Form @ref="form"
+    Model="@model"
+    ValidateOnChange="true"
+    Layout="FormLayout.Vertical"
+    Size="FormSize.Small">
+
+        
+
+        <FormItem Label="Id of subGroup" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.SubGroupId" />
+        </FormItem>
+
+        <FormItem Label="Id of indicator" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.IndicatorId" />
+        </FormItem>
+
+        <FormItem Label="Question name" Rules="@(FormValidationRules.textRules)">
+            <Input @bind-Value="model.Name" />
+        </FormItem>
+
+        <FormItem Label="Description" Rules="@(FormValidationRules.textRules)">
+            <Input @bind-Value="model.Description" />
+        </FormItem>
+
+        <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.Order" />
+        </FormItem>
+
+        <FormItem Label="Critical question value" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.CriticalQuestionValue" />
+        </FormItem>
+
+        <FormItem Label="Questiont type" Rules="@FormValidationRules.selectRules">
+            <Select DataSource="@questionTypesList"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="template type"
+            @bind-Value="model.Type"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'
+            Style="width: 150px">
+                <SelectOptions>
+                    @foreach (var item in questionTypesList)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                    }
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="Status" Rules="@FormValidationRules.selectRules">
+            <Select DataSource="@questionStatusList"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="template type"
+            @bind-Value="model.Status"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'
+            Style="width: 150px">
+                <SelectOptions>
+                    @foreach (var item in questionStatusList)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                    }
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="Critical question" Rules="@FormValidationRules.selectRules">
+            <Select DataSource="@criticalQuestionList"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            @bind-Value="model.Critical"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'
+            Style="width: 150px">
+                <SelectOptions>
+                    @foreach (var item in criticalQuestionList)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                    }
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="Calculation type" Rules="@FormValidationRules.selectRules">
+            <Select DataSource="@calculationQuestionTypeList"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            @bind-Value="model.CalculationType"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'
+            Style="width: 150px">
+                <SelectOptions>
+                    @foreach (var item in calculationQuestionTypeList)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                    }
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="GlobalWeight" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.GlobalWeight" />
+        </FormItem>
+
+        <FormItem Label="Indicator weight" Rules="@(FormValidationRules.numericRules)">
+            <AntDesign.InputNumber @bind-Value="model.IndicatorWeight" />
+        </FormItem>
+
+        
+
+    </Form>
+
+}
+
+
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer localizer { get; set; } = default!;
+    [Parameter] public int templateId { get; set; }
+
+    // Data parameters
+    [Parameter] public GetQuestionMetadataDTO? questionMetadataDTO { get; set; }
+    [Parameter] public List<GetQuestionsEvaluationControlsDTO>? questionsEvaluationControls { get; set; } // this replace metadata, because this hace the id
+    [Parameter] public List<GetGroupsByTemplateDTO>? groupsOfThisTemplate { get; set; }
+    [Parameter] public GetQuestionsDTO? questionToEdit { get; set; }
+
+    // form vars
+    private PutQuestionsDTO model { get; set; } = new PutQuestionsDTO();
+    private Form<PutQuestionsDTO> form = new();
+
+    // Data vars
+    private List<string> questionTypesList = new();
+    private List<string> questionStatusList = new();
+    private List<string> criticalQuestionList = new();
+    private List<string> calculationQuestionTypeList = new();
+    private Dictionary<string, int> groupsIdNameDictionary = new();
+    private Dictionary<string, int> evaluationControlsDictionary = new();
+
+    private bool ready = false;
+
+
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        // Charge list
+        if(questionMetadataDTO != null)
+        {
+            questionTypesList = questionMetadataDTO.QuestionType;
+            questionStatusList = questionMetadataDTO.QuestionStatus;
+            criticalQuestionList = questionMetadataDTO.CriticalQuestion;
+            calculationQuestionTypeList = questionMetadataDTO.CalculationQuestionType;
+        }
+
+        evaluationControlsDictionary = questionsEvaluationControls?.Where(x => x.Description != null)
+                                    .ToDictionary(x => x.Description!, x => x.Id)
+                                    ?? throw new ArgumentNullException(nameof(questionsEvaluationControls));
+
+        groupsIdNameDictionary = groupsOfThisTemplate?.Where(x => x.Name != null)
+                                .ToDictionary(x => x.Name!, x => x.Id)
+                                ?? throw new ArgumentNullException(nameof(groupsOfThisTemplate));
+
+
+        model.GroupId = questionToEdit?.GroupId ?? 0;
+        model.SubGroupId = questionToEdit?.SubGroupId == null ? 0 : questionToEdit?.SubGroupId;
+        model.Name = questionToEdit?.Name;
+        model.Description = questionToEdit?.Description;
+        model.Order = questionToEdit?.Order;
+        model.CriticalQuestionValue = questionToEdit?.CriticalQuestionValue;
+        model.Type = questionToEdit?.Type ?? "";
+        model.Status = questionToEdit?.Status ?? "";
+        model.Critical = questionToEdit?.Critical ?? "";
+        model.CalculationType = questionToEdit?.CalculationType ?? "";
+        model.GlobalWeight = questionToEdit?.GlobalWeight;
+        model.IndicatorWeight = questionToEdit?.IndicatorWeight;
+        model.QuestionEvaluationControlId = questionToEdit?.QuestionEvaluationControl?.Id == null ? 0 : questionToEdit?.QuestionEvaluationControl?.Id;
+
+
+        
+
+        ready = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // charge values into model
+        model.GroupId = questionToEdit?.GroupId ?? 1;
+        model.SubGroupId = questionToEdit?.SubGroupId == null ? 1 : questionToEdit?.SubGroupId;
+        model.Name = questionToEdit?.Name;
+        model.Description = questionToEdit?.Description;
+        model.Order = questionToEdit?.Order;
+        model.CriticalQuestionValue = questionToEdit?.CriticalQuestionValue;
+        model.Type = questionToEdit?.Type ?? "";
+        model.Status = questionToEdit?.Status ?? "";
+        model.Critical = questionToEdit?.Critical ?? "";
+        model.CalculationType = questionToEdit?.CalculationType ?? "";
+        model.GlobalWeight = questionToEdit?.GlobalWeight;
+        model.IndicatorWeight = questionToEdit?.IndicatorWeight;
+        model.QuestionEvaluationControlId = questionToEdit?.QuestionEvaluationControl?.Id == null ? 1 : questionToEdit?.QuestionEvaluationControl?.Id;
+
+    }
+
+
+
+    // To control
+    public (bool formValidate, PutQuestionsDTO questionUpdated) ValidateAndGetData()
+    {
+        if (!form.Validate())
+        {
+            return (false, model);
+        }
+        return (true, model);
+    }
+
+
+    public void ClearForm()
+    {
+        form.Reset();
+    }
+}

@@ -1,0 +1,175 @@
+﻿@if (ready)
+{
+    <Form @ref="form" Model="model"
+          ValidateOnChange="true"
+          Layout="FormLayout.Vertical"
+          Size="FormSize.Small">
+
+        <FormItem Label="@localizer["UpdateName"]">
+            <Input @bind-Value="@model.Name" />
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateDescription"]">
+            <Input @bind-Value="@model.Description" />
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateLabel"]">
+            <Input @bind-Value="@model.Label" />
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateSize"]">
+            <Select DataSource="@sizeDictionarie.Values"
+                    TItemValue="string"
+                    TItem="string"
+                    EnableSearch
+                    @bind-Value="model.Size"
+                    DefaultActiveFirstOption="false"
+                    DefaultValue='"0"'
+                    Style="width: 150px">
+                <SelectOptions>
+                    @foreach (var item in sizeDictionarie)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateMaxLength"]">
+            <AntDesign.InputNumber @bind-Value="@model.MaxLength" />
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateRequired"]">
+            <Select TItemValue="bool"
+                    TItem="string"
+                    EnableSearch
+                    @bind-Value="model.Required"
+                    DefaultActiveFirstOption="false"
+                    Style="width: 150px">
+                <SelectOptions>
+                    <SelectOption TItemValue="bool" TItem="string" Value="@true" Label="Yes" />
+                    <SelectOption TItemValue="bool" TItem="string" Value="@false" Label="No" />
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+        <FormItem Label="@localizer["UpdateVisible"]">
+            <Select TItemValue="bool"
+                    TItem="string"
+                    EnableSearch
+                    @bind-Value="model.Visible"
+                    DefaultActiveFirstOption="false"
+                    Style="width: 150px">
+                <SelectOptions>
+                    <SelectOption TItemValue="bool" TItem="string" Value="@true" Label="Yes" />
+                    <SelectOption TItemValue="bool" TItem="string" Value="@false" Label="No" />
+                </SelectOptions>
+            </Select>
+        </FormItem>
+
+    </Form>
+}
+
+
+@code {
+    private bool ready = false;
+
+    // Parameters
+    [Parameter] public IStringLocalizer localizer { get; set; } = default!;
+    [Parameter] public GetContextFieldsTypesDTO? contextFieldToUpdate { get; set; }
+
+    // Form vars
+    private PutContextFieldsTypesDTO model { get; set; } = new PutContextFieldsTypesDTO();
+    private Form<PutContextFieldsTypesDTO> form = new();
+
+    // List vars
+    private Dictionary<string, string> sizeDictionarie = new Dictionary<string, string>()
+    {
+        {"small", "1" },
+        {"medium", "2" },
+        {"large", "3" },
+    };
+
+    private int? previousContextFieldId;
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        LoadFormData();
+    }
+
+    // Este método se llama cada vez que los parámetros cambian
+    protected override void OnParametersSet()
+    {
+        // Verificar si el contextFieldToUpdate ha cambiado
+        if (contextFieldToUpdate != null &&
+            (previousContextFieldId == null || previousContextFieldId != contextFieldToUpdate.Id))
+        {
+            // Recargar el formulario con los nuevos datos
+            LoadFormData();
+
+            // Actualizar el ID almacenado para la próxima comparación
+            previousContextFieldId = contextFieldToUpdate.Id;
+        }
+    }
+
+    private void LoadFormData()
+    {
+        ready = false;
+        form.Reset();
+
+        if (contextFieldToUpdate == null)
+        {
+            throw new ArgumentNullException(nameof(contextFieldToUpdate));
+        }
+
+        model = new PutContextFieldsTypesDTO
+            {
+                Name = contextFieldToUpdate.Name,
+                Description = contextFieldToUpdate.Description,
+                Label = contextFieldToUpdate.Label,
+                Size = GetValueFromList(sizeDictionarie, contextFieldToUpdate.Size),
+                MaxLength = contextFieldToUpdate.MaxLength,
+                Order = contextFieldToUpdate.Order,
+                Required = contextFieldToUpdate.Required,
+                Visible = contextFieldToUpdate.Visible
+            };
+
+        ready = true;
+        StateHasChanged();
+    }
+
+
+
+    // To obtain id by Name of NameValuePair
+    private string GetValueFromList(Dictionary<string, string>? list, string? name)
+    {
+        if (list == null || name == null)
+        {
+            return "0"; // default value
+        }
+
+        var item = list.FirstOrDefault(x => x.Key == name);
+        return item.Value?.ToString() ?? "1";
+    }
+
+    public (bool, int, PutContextFieldsTypesDTO) ObtainFormData()
+    {
+        if (contextFieldToUpdate == null)
+        {
+            throw new ArgumentNullException(nameof(contextFieldToUpdate));
+        }
+
+        if (!form.Validate())
+        {
+            return (false, contextFieldToUpdate.Id, model);
+        }
+
+        return (true, contextFieldToUpdate.Id, model);
+    }
+
+    public void ClearForm()
+    {
+        form.Reset();
+    }
+}

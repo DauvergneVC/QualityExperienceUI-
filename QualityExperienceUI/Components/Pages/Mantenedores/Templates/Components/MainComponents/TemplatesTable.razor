@@ -1,0 +1,146 @@
+﻿@* Usings *@
+@using System.ComponentModel.DataAnnotations
+@using AntDesign.Filters
+
+
+@* Component content *@
+@if (templatesByFilters == null)
+{
+    <Table @ref="_table" TItem="GetTemplatesDTO" PageSize="5" DataSource="@(allTemplates)" Size="TableSize.Middle" Bordered="false" RowExpandable="@(record=> true)" Locale="_tableLocale">
+
+        <ColumnDefinitions>
+            <PropertyColumn Property="c=>c.Name"
+                            Title="@localizer["TableColumnName"]"
+                            SorterCompare="@((a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase))"
+                            SortDirections="new[] { SortDirection.Ascending, SortDirection.Descending }"
+                            Filterable FieldFilterType="simpleStringFilter" />
+            <PropertyColumn Property="c=>c.Description"
+                            Title="@localizer["TableColumnDescription"]" />
+            <PropertyColumn Property="c=>c.Status"
+                            Title="@localizer["TableColumnStatus"]">
+                @if (context.Status == "Inactive")
+                {
+                    color = TagColor.Volcano;
+                }
+                else
+                {
+                    color = context.Status == "Draft" ? TagColor.GeekBlue : TagColor.Green;
+                }
+                <Tag Color="@color">@context.Status</Tag>
+            </PropertyColumn>
+            <ActionColumn Title="@localizer["TableColumnControls"]">
+                <CellRender Context="cellData">
+                    <a style="margin-left: 10px;color: blue;" @onclick="()=> DetailsButton(context.Id)">@localizer["TableViewButton"]</a>
+                </CellRender>
+            </ActionColumn>
+        </ColumnDefinitions>
+        <ExpandTemplate>
+            <p>@localizer["TableExpandID"]: @context.Data.Id</p>
+            <p>@localizer["TableExpandAuthorID"]: @context.Data.AuthorId</p>
+            <p>@localizer["TableExpandClientID"]: @context.Data.ClientId</p>
+            <p>@localizer["TableExpandIsArchived"] : @context.Data.Archived</p>
+            <p>@localizer["TableExpandCalculationType"]: @context.Data.CalculationType</p>
+            <p>@localizer["TableExpandAllowAttachment"]: @context.Data.AllowAttachment</p>
+            <p>@localizer["TableExpandFeedbackType"]: @context.Data.FeedbackType</p>
+            <p>@localizer["TableExpandTemplateType"]: @context.Data.TemplateType</p>
+            @* DateTimes with format from resourcefile *@
+            <p>@localizer["TemplateExpandCreatedAt"]: @(context.Data.CreatedAt.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+            <p>@localizer["TemplateExpandUpdatedAt"]: @(context.Data.UpdatedAt.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+        </ExpandTemplate>
+
+    </Table>
+
+}
+else
+{
+    <Table @ref="_table" TItem="GetTemplatesByFiltersDTO" PageSize="5" DataSource="@(templatesByFilters)" Size="TableSize.Middle" Bordered="false" RowExpandable="@(record=> true)" Locale="_tableLocale">
+
+        <ColumnDefinitions>
+            <PropertyColumn Property="c=>c.Name"
+                            Title="@localizer["TableColumnName"]"
+                            SorterCompare="@((a, b) => string.Compare(a, b, StringComparison.OrdinalIgnoreCase))"
+                            SortDirections="new[] { SortDirection.Ascending, SortDirection.Descending }"
+                            Filterable FieldFilterType="simpleStringFilter" />
+            <PropertyColumn Property="c=>c.Description"
+                            Title="@localizer["TableColumnDescription"]" />
+            <PropertyColumn Property="c=>c.Status"
+                            Title="@localizer["TableColumnStatus"]">
+                @if (context.Status == "Inactive")
+                {
+                    color = TagColor.Volcano;
+                }
+                else
+                {
+                    color = context.Status == "Draft" ? TagColor.GeekBlue : TagColor.Green;
+                }
+                <Tag Color="@color">@context.Status</Tag>
+            </PropertyColumn>
+            <ActionColumn Title="@localizer["TableColumnControls"]">
+                <CellRender Context="cellData">
+                    <a style="margin-left: 10px,color: blue;" @onclick="_=>DetailsButton(context.Id)">@localizer["TableViewButton"]</a>
+                </CellRender>
+            </ActionColumn>
+        </ColumnDefinitions>
+        <ExpandTemplate>
+            <p>@localizer["TableExpandID"]: @context.Data.Id</p>
+            <p>@localizer["TableExpandAuthorID"]: @context.Data.AuthorId</p>
+            <p>@localizer["TableExpandClientID"]: @context.Data.ClientId</p>
+            <p>@localizer["TableExpandClientName"]: @context.Data.ClientId</p>
+
+            <p>@localizer["TableExpandCalculationType"]: @context.Data.CalculationType</p>
+            <p>@localizer["TableExpandAllowAttachment"]: @context.Data.AllowAttachment</p>
+            <p>@localizer["TableExpandFeedbackType"]: @context.Data.FeedbackType</p>
+            <p>@localizer["TableExpandTemplateType"]: @context.Data.TemplateType</p>
+            @* DateTimes with format from resourcefile *@
+            <p>@localizer["TemplateExpandCreatedAt"]: @(context.Data.CreatedAt.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+            <p>@localizer["TemplateExpandUpdatedAt"]: @(context.Data.UpdatedAt.ToString(dateFormat, CultureInfo.CurrentCulture))</p>
+        </ExpandTemplate>
+
+    </Table>
+}
+
+
+@code {
+    // Injects parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+
+    // Events
+    [Parameter] public EventCallback<int> OnTemplateSelected { get; set; }
+
+    // Lists parameters
+    [Parameter] public List<GetTemplatesDTO>? allTemplates { get; set; }
+    [Parameter] public List<GetTemplatesByFiltersDTO>? templatesByFilters { get; set; }
+   
+    // Table vars
+    ITable? _table;
+    private TagColor color;
+    private TableLocale _tableLocale = new TableLocale();
+    string? dateFormat;
+    readonly StringFieldFilterType simpleStringFilter = new() { SupportedCompareOperators = new[] { TableFilterCompareOperator.Contains, TableFilterCompareOperator.NotEquals } };
+
+
+    // Mehods
+    protected override void OnInitialized()
+    {
+        // Initialize tableLocale after obtaining localizer
+        _tableLocale = new TableLocale
+            {
+                // para ordenar ascentende
+                TriggerAsc = localizer["TableLocaleTriggerAsc"].Value,
+                // para ordenar Desendente
+                TriggerDesc = localizer["TableLocaleTriggerDesc"].Value,
+                // para limpiar orden
+                CancelSort = localizer["TableLocaleCancelSort"].Value,
+            };
+
+        // Inizialide DateFormat
+        dateFormat = localizer["DateTimeFormater"].Value;
+    }
+
+
+    // Details buttons
+    private void DetailsButton(int id)
+    {
+        OnTemplateSelected.InvokeAsync(id);
+    }
+}

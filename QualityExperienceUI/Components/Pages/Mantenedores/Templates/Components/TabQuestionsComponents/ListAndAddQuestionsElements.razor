@@ -1,0 +1,237 @@
+﻿<AntList DataSource="questionOfThisTemplate" Bordered>
+    <ChildContent Context="question">
+
+        <ListItem Actions="Actions(question)">
+
+            <ListItemMeta Description="@($"| Question code: {question.Id} | Question status: {question.Status} | Description: {question.Description}")">
+                <TitleTemplate>
+                    <TextArea @bind-Value="@question.Name" OnBlur="@(() => QuestionNameChange(question))" Style="width: 400px; height: 20px" />
+                </TitleTemplate>
+            </ListItemMeta>
+
+            <!-- #region Modify groups and evaluation control -->
+            <div class="AssociatedGroups" style="margin-right: 10px">
+                <label>@localizer["AssociatedGroup"]</label>
+                <Select DataSource="groupsIdNameDictionary.Values"
+                TItemValue="int"
+                TItem="int"
+                EnableSearch
+                Value="@(question.GroupId ?? 0)"
+                ValueChanged="@(value => GroupSelectChange(question, value))"
+                DefaultActiveFirstOption="false"
+                Style="width: 200px">
+                    <SelectOptions>
+                        @foreach (var item in groupsIdNameDictionary)
+                        {
+                            <SelectOption TItemValue="int" TItem="int" Value="@item.Value" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+            </div>
+
+            <div class="SelectEvaluationControl">
+                <label>@localizer["EvaluationControl"]</label>
+                <Select DataSource="evaluationControlsDictionary.Values"
+                TItemValue="int"
+                TItem="int"
+                EnableSearch
+                Value="@(question.QuestionEvaluationControl?.Id ?? 0)"
+                ValueChanged="@(value => EvaluationControlSelectChange(question, value))"
+                DefaultActiveFirstOption="false"
+                Style="width: 200px">
+                    <SelectOptions>
+                        @foreach (var item in evaluationControlsDictionary)
+                        {
+                            <SelectOption TItemValue="int" TItem="int" Value="@((int)item.Value)" Label="@item.Key" />
+                        }
+                    </SelectOptions>
+                </Select>
+            </div>
+            <!-- #endregion -->
+        </ListItem>
+
+        <!-- #region List questions Item and update lists -->
+        <ListItem>
+            <div style="display: flex; text-align: left;">
+
+                @foreach (var questionItem in question.QuestionItems ?? default!)
+                {
+                    <ProcessToShowControlType Id="@questionItem.Id" questionItem="@questionItem" allValuesDictionary="allValuesDictionary" />
+
+                    @if (questionItem.ControlType == "DropdownSingle" || questionItem.ControlType == "DropdownMultiple")
+                    {
+                        <Button OnClick="@(()=> OnCreateQuestionItemListValue.InvokeAsync(questionItem.Id))" Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" Style="width: 25px; height: 20px; border-radius: 5px">
+                        </Button>
+                    }
+
+                    <Divider Type="DividerType.Vertical" Style="margin-right: 10px" />
+                }
+
+            </div>
+        </ListItem>
+        <!-- #endregion -->
+
+    </ChildContent>
+</AntList>
+
+
+@code {
+    // Reusable parameters
+    [Parameter] public int templateId { get; set; }
+
+    // Injects
+    [Parameter] public IStringLocalizer localizer { get; set; } = default!;
+
+    // Events
+    [Parameter] public EventCallback<GetQuestionsDTO> OnModifyAllQuestion { get; set; }
+    [Parameter] public EventCallback<(int, GetQuestionsDTO, int?, int?)> OnUpdateQuestion { get; set; }
+    [Parameter] public EventCallback<int> OnCreateQuestionItemListValue { get; set; }
+    [Parameter] public EventCallback<int> OnCreateQuestionItem { get; set; }
+
+    // Data Parameters
+    [Parameter] public List<GetQuestionsDTO>? allQuestions { get; set; }
+    [Parameter] public GetQuestionMetadataDTO? allQuestionsMetadata { get; set; }
+    [Parameter] public List<GetQuestionsEvaluationControlsDTO>? questionEvaluationsControls { get; set; }
+    [Parameter] public List<GetGroupsByTemplateDTO>? groupsOfThisTemplate { get; set; } // This list is obtain directly from the tab page
+
+    [Parameter] public Dictionary<int, List<GetQuestionItemListValuesDTO>>? allValuesDictionary { get; set; }
+    [Parameter] public List<GetQuestionItemListValuesDTO>? listValues { get; set; }
+
+    // ListVars
+    private List<GetQuestionsDTO> questionOfThisTemplate = new();
+    private Dictionary<string, int> groupsIdNameDictionary = new();
+    private Dictionary<string, int> evaluationControlsDictionary = new();
+
+    // Control vars
+    private Dictionary<int, bool> initializedGroupsControls = new();
+    private Dictionary<int, bool> initializedEvaluationsControlControls = new();
+
+    // Renders for questions control
+    private RenderFragment[] Actions(GetQuestionsDTO question) => new RenderFragment[] {
+        builder =>
+        {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, ()=> OnModifyAllQuestion.InvokeAsync(question)));
+                builder.AddContent(2, "Modify all");
+                builder.CloseElement();
+        },
+        builder =>
+        {
+                builder.OpenElement(0, "a");
+                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, ()=> OnCreateQuestionItem.InvokeAsync(question.Id)));
+                builder.AddContent(2, "Add Item");
+                builder.CloseElement();
+        },
+        builder =>
+        {
+                builder.OpenElement(0, "a");
+                // builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => Delete(item.id)));
+                builder.AddContent(2, "Delete");
+                builder.CloseElement();
+        }
+    };
+
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+
+        // Charge all questions, groups and metadata
+        questionOfThisTemplate = allQuestions?.Where(x => x.TemplateId == templateId).ToList()
+                                 ?? throw new ArgumentNullException(nameof(allQuestions));
+
+        evaluationControlsDictionary = questionEvaluationsControls?.Where(x => x.Description != null)
+                                    .ToDictionary(x => x.Description!, x => x.Id)
+                                    ?? throw new ArgumentNullException(nameof(questionEvaluationsControls));
+
+        groupsIdNameDictionary = groupsOfThisTemplate?.Where(x => x.Name != null)
+                                .ToDictionary(x => x.Name!, x => x.Id)
+                                ?? throw new ArgumentNullException(nameof(groupsOfThisTemplate));
+
+        
+    }
+
+    // This method is executed if the parameters change
+    protected override void OnParametersSet()
+    {
+        questionOfThisTemplate = allQuestions?.Where(x => x.TemplateId == templateId).ToList()
+                                 ?? throw new ArgumentNullException(nameof(allQuestions));
+    }
+
+
+    // Selects and inputs change
+    private void GroupSelectChange(GetQuestionsDTO question, int newGroupId)
+    {
+        // Is the fist time that the control is initialized?
+        if (!initializedGroupsControls.ContainsKey(question.Id))
+        {
+            initializedGroupsControls[question.Id] = true;
+            // if is the first time, set the value and return
+            question.GroupId = newGroupId;
+            return;
+        }
+
+        // if the value is the same that the initialized value, return
+        if (question.GroupId == newGroupId)
+            return;
+
+        // update the value inmediately
+        question.GroupId = newGroupId;
+
+        // Call the event to update question
+        _ = Task.Run(async () =>
+        {
+            await OnUpdateQuestion.InvokeAsync((question.Id, question, newGroupId, null));
+        });
+    }
+
+    private void EvaluationControlSelectChange(GetQuestionsDTO question, int newEvaluationControlId)
+    {
+        // Is the fist time that the control is initialized?
+        if (!initializedEvaluationsControlControls.ContainsKey(question.Id))
+        {
+            initializedEvaluationsControlControls[question.Id] = true;
+            // if is the first time, set the value and return
+            if (question.QuestionEvaluationControl == null)
+            {
+                question.QuestionEvaluationControl = new GetQuestionsDTO.QuestionEvaluationControlResponse { Id = newEvaluationControlId };
+            }
+            else
+            {
+                question.QuestionEvaluationControl.Id = newEvaluationControlId;
+            }
+            return;
+        }
+
+        // if the value is the same that the initialized value, return
+        if (question.QuestionEvaluationControl?.Id == newEvaluationControlId)
+            return;
+
+        // update the value inmediately
+        if (question.QuestionEvaluationControl == null)
+        {
+            question.QuestionEvaluationControl = new GetQuestionsDTO.QuestionEvaluationControlResponse { Id = newEvaluationControlId };
+        }
+        else
+        {
+            question.QuestionEvaluationControl.Id = newEvaluationControlId;
+        }
+        
+        // Call the event to update question
+        _ = Task.Run(async () =>
+        {
+            await OnUpdateQuestion.InvokeAsync((question.Id, question, null, newEvaluationControlId));
+        });
+    }
+
+    private void QuestionNameChange(GetQuestionsDTO question)
+    {
+        _ = Task.Run(async () =>
+        {
+            await OnUpdateQuestion.InvokeAsync((question.Id, question, null, null));
+        });
+    }
+}

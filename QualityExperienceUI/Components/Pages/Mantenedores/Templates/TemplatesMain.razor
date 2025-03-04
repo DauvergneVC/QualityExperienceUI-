@@ -1,0 +1,173 @@
+﻿@* Using and Injects *@
+@using QualityExperienceUI.Components.Pages.Mantenedores.Templates.Components.MainComponents
+@using QualityExperienceUI.Local.Resources.TemplatesResources
+@inject IStringLocalizer<TemplateResx> localizer
+@using QualityExperienceUI.Local.Resources.TooltipsResources
+@inject IStringLocalizer<TooltipsResx> tooltipsLocalizer
+@inject NavigationManager NavigationManager
+@inject IMessageService _message
+@inject ITemplatesCRUD _templatesCRUD
+@inject IClientsCRUD _clientsCRUD
+
+
+@* Page settings *@
+@page "/mantenedor/templates"
+<PageTitle>EvaluationTemplates</PageTitle>
+@attribute [ReuseTabsPage(Title = "Evaluation Templates")]
+
+
+@* Page components *@
+<h2 style="display: flex; justify-content: center; ">@localizer["MainPageTitle"]</h2>
+@if (isReady)
+{
+    @* Filter *@
+    <Divider Text="@localizer["MainDividerFilter"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" />
+    <TemplatesFilter localizer="localizer" allClientsList="allClients" templateMetadata="templatesMetadata" SearchTemplates="HandleSearchFilterButton" ClearFilterTask="HandleClearFilterButton"/>
+
+
+    @*Table to show templates*@
+    <Divider Text="@localizer["MainDividerTable"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal"/>
+    <TemplatesTable localizer="localizer" allTemplates="allTemplates" templatesByFilters="templatesByFilters" OnTemplateSelected="HandleTableDetailsButton" />
+
+
+    @* Drawer to create templates *@
+    <Divider Orientation="DividerOrientation.Right" Type="DividerType.Horizontal">
+        <Button Icon="@IconType.Outline.Plus" Type="ButtonType.Primary" @onclick="_=>showDrawer = true">
+            @localizer["DrawerShowButton"]
+        </Button>
+    </Divider>
+    <Drawer Closable="true" Width="720" Visible="showDrawer" Title="@(localizer["DrawerCreateTitle"].Value)" OnClose="_=>CloseOrCancel()">
+
+        <CreateTemplate localizer="localizer" tooltipsLocalizer="tooltipsLocalizer" allClientsList="allClients" templateMetadata="templatesMetadata" OnTemplateCreated="HandleCreateTemplateButton" OnCancel="HandleCancelButton" />
+
+    </Drawer>
+
+}
+
+
+@code {
+    private bool isReady = false;
+
+    // To send by parameters
+    // Table templates
+    private List<GetClientDTO> allClients = new();
+    private List<GetTemplatesDTO> allTemplates = new();
+    private List<GetTemplatesByFiltersDTO>? templatesByFilters = null;
+    //Filter
+    private GetTemplateMetadataDTO templatesMetadata = new();
+
+    // Drawers control
+    private bool showDrawer = false;
+
+
+    // Methods
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Get clients for filter
+            allClients = await _clientsCRUD.GetAllClientsAsync();
+            // Get fist list with all templates
+            allTemplates = await _templatesCRUD.GetAllTemplatesAsync();
+            // Get Metadata of templates
+            templatesMetadata = await _templatesCRUD.GetTemplatesMetadataAsync();
+
+
+            isReady = true;
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+    }
+
+    private async Task CloseOrCancel()
+    {
+        // Reload tmeplates
+        templatesByFilters = null;
+        allTemplates = await _templatesCRUD.GetAllTemplatesAsync();
+
+        // Hide drawer
+        showDrawer = false;
+
+    }
+
+
+    // Handles of filter
+    private async Task HandleSearchFilterButton((int id, string? status, string? type, string? authorID, DateTime? startDate, DateTime? endDate) filterValues)
+    {
+        try
+        {
+            int id = filterValues.id;
+            string? status = filterValues.status;
+            string? type = filterValues.type;
+            string? authorID = filterValues.authorID;
+            DateTime? startDate = filterValues.startDate;
+            DateTime? endDate = filterValues.endDate;
+
+            templatesByFilters = await _templatesCRUD.GetAllTemplatesByFiltersAsync(id, status, type, authorID, startDate, endDate);
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+
+    private async Task HandleClearFilterButton()
+    {
+        try
+        {
+            templatesByFilters = null;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+
+    // Handles of Create (Drawer)
+    private async Task HandleCreateTemplateButton((bool isFormValidate, PostTemplateDTO postModel) values)
+    {
+        try
+        {
+            if (!values.isFormValidate)
+            {
+                await _message.Warning(localizer["formNotValidate"].Value);
+
+            }
+            else
+            {
+                // Create template
+                var result = await _templatesCRUD.PostTemplateAsync(values.postModel);
+                if (result != null)
+                {
+                    await _message.Success(localizer["CreateSuccess"].Value);
+                }
+
+                // Create association templates-services
+                PostServicesAssociatedByTemplateIdDTO association = new()
+                    {
+                        TemplateId = result,
+                        ServiceIds = [],
+                    };
+                var resultAssociation = await _templatesCRUD.PostServicesAssociatedByTemplateIdAsync(association);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error($"Exepcion:\n {ex.Message}");
+        }
+    }
+
+    private async Task HandleCancelButton()
+    {
+        await CloseOrCancel();
+    }
+
+    // Handle table to show details
+    private void HandleTableDetailsButton(int id)
+    {
+        NavigationManager.NavigateTo($"/mantenedor/templates/details-{id}");
+    }
+}

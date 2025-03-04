@@ -1,0 +1,111 @@
+﻿@using System.ComponentModel.DataAnnotations
+
+
+@* Component content *@
+<div style="display: flex; justify-content: center;">
+    <Transfer DataSource="dataSource"
+              Disabled="_disabled"
+              TargetKeys="targetKeys"
+              SelectedKeys="_selectedKeys"
+              Titles="_titles"
+              OnChange="OnChange"
+              OnSelectChange="OnSelectChange" />
+
+</div>
+
+<style>
+    .ant-transfer-list {
+        display: flex;
+        flex-direction: column;
+        width: 400px;
+        height: 300px;
+        border: 1px solid #d9d9d9;
+        border-radius: 2px;
+    }
+
+</style>
+
+
+
+@code {
+    // Injects parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+
+    // Lists parameter
+    [Parameter] public List<GetServicesDTO>? allServices { get; set; }
+    [Parameter] public GetServicesAssociatedByTemplateIdDTO? servicesAssociatedByTemplateId { get; set; }
+
+    // Events
+    [Parameter] public EventCallback<(string direction, List<int> servicesIds)> OnAsociatedServicesChange { get; set; }
+
+    // Transfer vars
+    private List<TransferItem>? dataSource; // Type of data to transfer
+    private List<string> targetKeys = new List<string>();
+    private List<string> _selectedKeys = new List<string>();
+    private string[]? _titles;
+    private bool _disabled = false;
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        // Initialize transfer titles
+        _titles = new string[] { localizer["ServicesTransferServiciosDisponibles"].Value, localizer["ServicesTransferServiciosAsociados"].Value };
+
+        // Initialize the trasfer list
+        dataSource = new List<TransferItem>();
+
+        if (allServices != null)
+        {
+            // Charge all services
+            foreach (var service in allServices)
+            {
+                dataSource.Add(new TransferItem
+                    {
+                        Key = service.Id.ToString(),
+                        Title = service.Name,
+                        Description = service.Description,
+                        Disabled = false,
+                    });
+            }
+        }
+
+        // initialize targetKeys with services associated
+        targetKeys = new List<string>();
+        if (servicesAssociatedByTemplateId != null && servicesAssociatedByTemplateId.ServiceIds != null)
+        {
+
+            targetKeys = servicesAssociatedByTemplateId.ServiceIds.Select(id => id.ToString()).ToList();
+        }
+    }
+
+    
+    // Transfer methods
+    private async Task OnChange(TransferChangeArgs e)
+    {
+        List<int> movedServiceIds = new List<int>();
+
+        // Add list ids
+        foreach (string key in e.MoveKeys)
+        {
+            movedServiceIds.Add(int.Parse(key));
+        }
+        
+        // Direcction to callback function
+        if (e.Direction.ToString() == "Right")
+        {
+            await OnAsociatedServicesChange.InvokeAsync(("right", movedServiceIds));
+        }
+        else if (e.Direction.ToString() == "Left")
+        {
+            await OnAsociatedServicesChange.InvokeAsync(("left", movedServiceIds));
+        }
+    } 
+
+    private void OnSelectChange(TransferSelectChangeArgs e)
+    {
+        // Actualizar _selectedKeys cuando cambia la selección
+        _selectedKeys = e.SourceSelectedKeys.Concat(e.TargetSelectedKeys).ToList();
+    }
+
+}

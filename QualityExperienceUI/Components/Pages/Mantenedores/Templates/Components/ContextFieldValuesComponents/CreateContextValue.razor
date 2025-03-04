@@ -1,0 +1,54 @@
+﻿@using QualityExperienceUI.Data.Validators
+
+<Form @ref="form"
+      Model="@formModel"
+      ValidateOnChange="true"
+      Size="FormSize.Small">
+
+    <FormItem Label="name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.Name" />
+    </FormItem>
+
+    <FormItem Label="description" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@formModel.Description" />
+    </FormItem>
+
+</Form>
+
+
+@code
+{
+    // Parameters
+    [Parameter]
+    public int contextFieldTypeID { get; set; }
+
+    // For Form
+    private PostContextFieldValuesDTO formModel { get; set; } = new PostContextFieldValuesDTO();
+    private Form<PostContextFieldValuesDTO> form = new();
+
+
+    // methods
+    protected override void OnInitialized()
+    {
+        formModel.ContextFieldTypeId = contextFieldTypeID;
+    }
+
+
+    public (bool isValid, PostContextFieldValuesDTO data) ValidateAndGetData()
+    {
+        if (form != null)
+        {
+            var validateResult = form.Validate();
+            if (validateResult)
+            {
+                return (validateResult, formModel);
+            }
+        }
+        return (false, formModel);
+    }
+
+    public void Clear()
+    {
+        form.Reset();
+    }
+}

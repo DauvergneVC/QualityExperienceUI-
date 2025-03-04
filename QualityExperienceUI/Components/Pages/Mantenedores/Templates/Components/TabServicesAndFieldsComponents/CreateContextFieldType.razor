@@ -1,0 +1,117 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using QualityExperienceUI.Data.Validators
+
+
+@* Form *@
+<Form @ref="form" Model="model"
+ValidateOnChange="true"
+Layout="FormLayout.Vertical"
+Size="FormSize.Small">
+
+    <FormItem Label="@localizer["UpdateName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateLabel"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Label" />
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateSize"]" Rules="@(FormValidationRules.selectRules)">
+        <Select DataSource="@sizeDictionarie.Values"
+        TItemValue="string"
+        TItem="string"
+        EnableSearch
+        @bind-Value="model.Size"
+        DefaultActiveFirstOption="true"
+        DefaultValue='"0"'
+        Style="width: 150px">
+            <SelectOptions>
+                @foreach (var item in sizeDictionarie)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateMaxLength"]" Rules="(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="@model.MaxLength" />
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateRequired"]" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="bool"
+                TItem="string"
+                EnableSearch
+                @bind-Value="model.Required"
+                DefaultActiveFirstOption="false"
+                Style="width: 150px">
+            <SelectOptions>
+                <SelectOption TItemValue="bool" TItem="string" Value="@true" Label="Yes" />
+                <SelectOption TItemValue="bool" TItem="string" Value="@false" Label="No" />
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="@localizer["UpdateVisible"]" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="bool"
+                TItem="string"
+                EnableSearch
+                @bind-Value="model.Visible"
+                DefaultActiveFirstOption="false"
+                Style="width: 150px">
+            <SelectOptions>
+                <SelectOption TItemValue="bool" TItem="string" Value="@true" Label="Yes" />
+                <SelectOption TItemValue="bool" TItem="string" Value="@false" Label="No" />
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+</Form>
+
+
+@code {
+    // Parameters
+    [Parameter] public IStringLocalizer localizer { get; set; } = default!;
+    [Parameter] public int templateId { get; set; } = default!;
+
+    // Form vars
+    private PostContextFieldTypesdDTO model { get; set; } = new PostContextFieldTypesdDTO();
+    private Form<PostContextFieldTypesdDTO> form = new();
+
+    // List vars
+    private Dictionary<string, string> sizeDictionarie = new Dictionary<string, string>()
+    {
+        {"small", "1" },
+        {"medium", "2" },
+        {"large", "3" },
+    };
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        model.Order = 10;
+        model.TemplateId = templateId;
+    }
+
+
+    public (bool, PostContextFieldTypesdDTO) ObtainFormData()
+    {
+        if (!form.Validate())
+        {
+            return (false, model);
+        }
+
+        return (true, model);
+    }
+
+    public void ClearForm()
+    {
+        form.Reset();
+    }
+}

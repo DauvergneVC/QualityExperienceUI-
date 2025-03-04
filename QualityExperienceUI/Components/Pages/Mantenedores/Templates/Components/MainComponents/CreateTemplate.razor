@@ -1,0 +1,236 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using QualityExperienceUI.Data.Validators
+
+
+@* Form *@
+<Form @ref="form"
+Model="@model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Cliente" Rules="@(FormValidationRules.selectRules)">
+
+        <Select DataSource="@clientsPair.Values"
+        TItemValue="int"
+        TItem="int"
+        EnableSearch
+        Placeholder="@localizer["CreateTemplateSelectClient"]"
+        @bind-Value=model.ClientId
+        DefaultActiveFirstOption="false"
+        DefaultValue="0">
+            <SelectOptions>
+                @foreach (var client in clientsPair)
+                {
+                    <SelectOption TItemValue="int" TItem="int" Value="@client.Value" Label="@client.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+
+    <FormItem Label="@localizer["CreateTemplateName"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Name" />
+    </FormItem>
+
+    <FormItem Label="@localizer["CreateTemplateDescription"]" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Description" />
+    </FormItem>
+
+    <FormItem Label="@localizer["CreateTemplateAuthorID"]" Rules="@(FormValidationRules.numericRules)">
+        <Input @bind-Value="@model.AuthorId" />
+    </FormItem>
+
+
+    <FormItem Label="@localizer["CreateTemplateCalculationType"]" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@calculationTypeDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Select a calculation type"
+            @bind-Value="model.CalculationType"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in calculationTypeDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["DefaultTooltip"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="@localizer["CreateTemplateAllowAttachment"]" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@allowAttachmentDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Allow attachment?"
+            @bind-Value="model.AllowAttachment"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in allowAttachmentDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["DefaultTooltip"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="@localizer["CreateTemplateFeedbackType"]" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="@feedbackTypeDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Select a feedback type"
+            @bind-Value="model.FeedbackType"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in feedbackTypeDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["DefaultTooltip"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem Label="@localizer["CreateTemplateTemplateType"]" Rules="@(FormValidationRules.selectRules)" Style="display: flex; align-items: center;">
+        <div style="display: flex; align-items: center;">
+
+            <Select DataSource="templateTypeDictionary.Values"
+            TItemValue="string"
+            TItem="string"
+            EnableSearch
+            Placeholder="Select a template type"
+            @bind-Value="model.TemplateType"
+            DefaultActiveFirstOption="false"
+            DefaultValue='"0"'>
+                <SelectOptions>
+                    @foreach (var item in templateTypeDictionary)
+                    {
+                        <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                    }
+                </SelectOptions>
+            </Select>
+            <Tooltip Placement="Placement.Top" Title="@tooltipsLocalizer["DefaultTooltip"]">
+                <Icon Type="question" />
+            </Tooltip>
+        </div>
+    </FormItem>
+    <br />
+
+    <FormItem WrapperColOffset="8" WrapperColSpan="16">
+        <Button Type="ButtonType.Primary" HtmlType="submit" @onclick="_=>CreateButtonAction()">
+            @localizer["CreateTemplateButton"]
+        </Button>
+
+        <Button Type="ButtonType.Primary" HtmlType="Cancel" @onclick="_=>CancelButtonAction()" Danger>
+            @localizer["CreateTemplateCancelButton"]
+        </Button>
+    </FormItem>
+
+</Form>
+
+
+@code {
+    // Injects Parameters
+    [Parameter, Required] public IStringLocalizer localizer { get; set; } = default!;
+    [Parameter, Required] public IStringLocalizer tooltipsLocalizer { get; set; } = default!;
+
+    // Metadata and clients
+    [Parameter, Required] public List<GetClientDTO> allClientsList { get; set; } = default!;
+    [Parameter, Required] public GetTemplateMetadataDTO templateMetadata { get; set; } = default!;
+
+    // Events
+    [Parameter] public EventCallback <(bool,PostTemplateDTO)> OnTemplateCreated { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    // Form vars
+    private PostTemplateDTO model { get; set; } = new PostTemplateDTO();
+    private Form<PostTemplateDTO> form = new();
+
+    // Other vars
+    public Dictionary<string, int> clientsPair = new ();
+    private Dictionary<string, string> templateTypeDictionary { get; set; } = new();
+    private Dictionary<string, string> calculationTypeDictionary { get; set; } = new();
+    private Dictionary<string, string> allowAttachmentDictionary { get; set; } = new();
+    private Dictionary<string, string> feedbackTypeDictionary { get; set; } = new();
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        // Set clients dictionaries
+        foreach (var client in allClientsList)
+        {
+            clientsPair.Add(client.Name ?? "defaulth client name", client.Id);
+        }
+        // set metadata dictionaries
+        if (templateMetadata != null)
+        {
+            foreach (var type in templateMetadata.TemplateType)
+            {
+                templateTypeDictionary.Add(type.Name, type.Value.ToString());
+            }
+
+            foreach (var calculations in templateMetadata.CalculationType)
+            {
+                calculationTypeDictionary.Add(calculations.Name, calculations.Value.ToString());
+            }
+
+            foreach (var attachment in templateMetadata.AllowAttachment)
+            {
+                allowAttachmentDictionary.Add(attachment.Name, attachment.Value.ToString());
+            }
+
+            foreach (var feedback in templateMetadata.FeedbackType)
+            {
+                feedbackTypeDictionary.Add(feedback.Name, feedback.Value.ToString());
+            }
+        }
+    }
+
+
+    // Buttons
+    private async Task CreateButtonAction()
+    {
+        
+        if (!form.Validate())
+        {
+            await OnTemplateCreated.InvokeAsync((false, model));
+        }
+        else
+        {
+            await OnTemplateCreated.InvokeAsync((true, model));
+        }
+
+    }
+
+    private void CancelButtonAction()
+    {
+        OnCancel.InvokeAsync();
+    }
+}

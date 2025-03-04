@@ -1,0 +1,109 @@
+﻿@using QualityExperienceUI.Data.Validators
+
+
+@* Form *@
+<Form @ref="form"
+Layout="FormLayout.Vertical"
+Model="@model"
+ValidateOnChange="true"
+Size="FormSize.Small">
+
+    <FormItem Label="Label" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="@model.Label" />
+    </FormItem>
+
+    <FormItem Label="Control Type" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="string"
+        TItem="string"
+        EnableSearch
+        Style="width: 200px"
+        @bind-Value="@model.ControlType"
+        DefaultActiveFirstOption="false">
+            <SelectOptions>
+                @foreach (var item in controlTypesDictionary)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+    <FormItem Label="Size" Rules="@(FormValidationRules.selectRules)">
+        <Select TItemValue="string"
+        TItem="string"
+        EnableSearch
+        Style="width: 200px"
+        @bind-Value="@model.Size"
+        DefaultActiveFirstOption="false">
+            <SelectOptions>
+                @foreach (var item in sizesDictionary)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.Value" Label="@item.Key" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
+
+
+</Form>
+
+
+@code {
+    // Parameters
+    [Parameter] public GetQuestionMetadataDTO? questionMetadataDTO { get; set; }
+    [Parameter] public int questionId { get; set; }
+
+    // Form vars
+    private PostQuestionItemDTO model { get; set; } = new PostQuestionItemDTO();
+    private Form<PostQuestionItemDTO> form = new();
+
+    // Lists vars
+    private Dictionary<string, string> controlTypesDictionary = new()
+    {
+        { "Dropdown Single", "1" },
+        { "Dropdown Multiple", "2" },
+        { "Text Area", "3" },
+        { "Text", "4" },
+        { "Number", "5" },
+        { "Color", "6" },
+        { "Email", "7" },
+        { "Date", "8" },
+        { "Time", "9" }
+    };
+
+    private Dictionary<string, string> sizesDictionary = new()
+    {
+        { "Small", "1" },
+        { "Medium", "2" },
+        { "Large", "3" }
+    };
+
+
+    // Methods
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        model.QuestionId = questionId;
+    }
+
+
+    public (bool formValidate, PostQuestionItemDTO questionItem) ValidateAndGetData()
+    {
+        if (form != null)
+        {
+            if (form.Validate())
+            {
+                return (true, model);
+            }
+        }
+
+        return (false, model);
+    }
+
+
+    public void ClearForm()
+    {
+        form.Reset();
+    }
+}
