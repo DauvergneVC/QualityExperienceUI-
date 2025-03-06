@@ -19,7 +19,7 @@
 
     @* Context fields *@
     <Divider Text="@localizer["TabContextFieldsDivider"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
-    <ContextFieldsTypesList localizer="localizer" allContextFieldsTypes="allContextFieldsTypes" OnNavegateToValues="HandleNavegateToContextValues" OnDeletedButton="HandleDeleteContextField" OnUpdatedButton="HandleOnUpdateContextField" />
+    <ContextFieldsTypesList localizer="localizer" allContextFieldsTypes="allContextFieldsTypes" OnNavegateToValues="HandleNavegateToContextValues" OnDeletedButton="HandleDeleteContextField" OnUpdatedButton="HandleOnUpdateContextField" OnUpdateVisible="HandleOnUpdateVisible" />
 
     @* Update context field type *@
     <Modal Visible="showContextFieldEditModal"
@@ -57,8 +57,8 @@
 }
 
 @code {
-        // Reusable parameter
-        [Parameter] public int templateId { get; set; }
+    // Reusable parameter
+    [Parameter] public int templateId { get; set; }
 
     // General vars
     private bool isReady = false;
@@ -192,7 +192,7 @@
                 {
                     _ = Task.Run(async () =>
                     {
-                       await _message.Success("Exito");
+                        await _message.Success("Exito");
                     });
 
                     StateHasChanged();
@@ -246,6 +246,37 @@
     {
         contextFieldTypeToEdit = contextField;
         showContextFieldEditModal = true;
+    }
+
+    private async Task HandleOnUpdateVisible(GetContextFieldsTypesDTO contextField)
+    {
+        try
+        {
+            PutContextFieldsTypesDTO putModel = new()
+                {
+                    Name = contextField.Name,
+                    Description = contextField.Description,
+                    Label = contextField.Label,
+                    Size = contextField.Size,
+                    MaxLength = contextField.MaxLength,
+                    Order = contextField.Order,
+                    Required = contextField.Required,
+                    Visible = contextField.Visible
+                };
+
+            bool result = await _contextFliedsCRUD.PutContextFieldTypeAsync(contextField.Id, putModel);
+            if (result)
+            {
+                await _message.Success("Exito");
+                StateHasChanged();
+
+            }
+        }
+        catch (Exception ex)
+        {
+            await _message.Error(ex.Message);
+        }
+
     }
 
     private void HandleNavegateToContextValues(int contextTypeId)

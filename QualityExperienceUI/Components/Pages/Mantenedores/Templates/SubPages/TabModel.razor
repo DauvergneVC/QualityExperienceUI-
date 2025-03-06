@@ -21,9 +21,10 @@
                         <span>@group.Name</span>
                         @if (HasRadioQuestions(group))
                         {
-                            <RadioGroup Options="@YesNo"
-                            Value="@groupResponses[group.Id]"
-                            OnChange="@(async (string value) => await HandleGroupRadioChange(group.Id, value))" />
+
+                            <RadioGroup Options="@ValuesToYesNo" @bind-Value="groupsRaddioValues[group.Id]" OnChange="@((int value) => MarcQuestions(group.Id, value))" />
+                            @* @(async (string value) => await HandleQuestionRadioChange(group.Id, question.Id, value)) *@
+
                         }
                     </div>
                 </HeaderTemplate>
@@ -32,26 +33,22 @@
                     {
                         <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0">
                             <p style="margin: 0">@question.Name</p>
-                            <div style="display: flex; justify-content: right; padding-right: 20px">
-                                @if (IsRadioQuestion(question))
+
+
+                            <div>
+
+                                @if (question.QuestionEvaluationControl?.EvaluationControl == "Radio" && question.QuestionEvaluationControl.Description == "Yes/No/NA")
                                 {
-                                    @if (!questionResponses.ContainsKey(question.Id))
-                                    {
-                                        questionResponses[question.Id] = string.Empty;
-                                    }
-                                    <RadioGroup Options="@YesNo"
-                                    Value="@questionResponses[question.Id]"
-                                    OnChange="@(async (string value) => await HandleQuestionRadioChange(group.Id, question.Id, value))" />
+                                    <RadioGroup Options="@ValuesToYesNoNa" @bind-Value="valuesSaver[group.Id][question.Id]" OnChange="@((int value) => unMarcGroups(group.Id, value))" />
                                 }
-                                else
+                                else if(question.QuestionEvaluationControl?.EvaluationControl == "Radio")
                                 {
-                                    @foreach (var questionItem in question.QuestionItems ?? default!)
-                                    {
-                                        <label>@questionItem.Label</label>
-                                        <p style="margin-right: 15px">@questionItem.ControlType</p>
-                                    }
+                                    <RadioGroup Options="@ValuesToYesNo" @bind-Value="valuesSaver[group.Id][question.Id]" OnChange="@((int value) => unMarcGroups(group.Id, value))" />
                                 }
+
                             </div>
+
+
                         </div>
                         <Divider />
                     }
@@ -61,6 +58,8 @@
     </Collapse>
 
     @* Context in combobox *@
+    <Divider Text="@localizer["TabModelContextCombosDivider"]" Orientation="DividerOrientation.Left" Type="DividerType.Horizontal" Style="margin-top: 50px" />
+
     <div>
         @foreach (var contextField in contextFieldsTypes)
         {
@@ -70,11 +69,11 @@
                 <label style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space:nowrap">@contextField.Name</label>
 
                 <Select DataSource="allValuesNamesOfContextTypes[contextField.Id]"
-                        TItemValue="string"
-                        TItem="string"
-                        EnableSearch
-                        Style="width: 200px"
-                        DefaultActiveFirstOption="false">
+                TItemValue="string"
+                TItem="string"
+                EnableSearch
+                Style="width: 200px"
+                DefaultActiveFirstOption="false">
                     <SelectOptions>
                         @foreach (var item in allValuesNamesOfContextTypes[contextField.Id])
                         {
@@ -93,6 +92,8 @@
 
 
 @code {
+    
+
     // Reusable parameters
     [Parameter] public int templateId { get; set; }
 
@@ -101,17 +102,24 @@
 
     // List vars
     private List<GetQuestionsByTemplateIdDTO> questions = new();
-    private Dictionary<int, string> groupResponses = new();
-    private Dictionary<int, string> questionResponses = new();
+
+    private Dictionary<int, int> groupsRaddioValues { get; set; } = new(); // (group id, group value)
+    private Dictionary<int, Dictionary<int, int>> valuesSaver { get; set; } = new();// (groupId, (questionid,value))
 
     private List<GetContextFieldsTypesDTO> contextFieldsTypes = new();
     private Dictionary<int, List<string>> allValuesNamesOfContextTypes = new();
 
     // Radio
-    private RadioOption<string>[] YesNo = new[]
+    private RadioOption<int>[] ValuesToYesNo = new[]
     {
-        new RadioOption<string> { Value = "Yes", Label = "Yes" },
-        new RadioOption<string> { Value = "No", Label = "No" }
+        new RadioOption<int> { Value = 1, Label = "Yes" },
+        new RadioOption<int> { Value = 2, Label = "No" }
+    };
+    private RadioOption<int>[] ValuesToYesNoNa = new[]
+    {
+        new RadioOption<int> { Value = 1, Label = "Yes" },
+        new RadioOption<int> { Value = 2, Label = "No" },
+        new RadioOption<int> { Value = 3, Label = "Na" }
     };
 
 
@@ -123,9 +131,12 @@
             // Charge data of questions
             questions = await _questionsCRUD.GetAllQuestionDataByTemplateIdAsync(templateId);
 
+
+            // Charge dictionries to save values
             foreach (var group in questions)
             {
-                groupResponses[group.Id] = string.Empty;
+                groupsRaddioValues[group.Id] = 0;
+                valuesSaver[group.Id] = new Dictionary<int, int>();
 
                 if (group.Questions != null)
                 {
@@ -133,7 +144,7 @@
                     {
                         if (IsRadioQuestion(question))
                         {
-                            questionResponses[question.Id] = string.Empty;
+                            valuesSaver[group.Id][question.Id] = 0;
                         }
                     }
                 }
@@ -174,61 +185,21 @@
         return group.Questions?.Any(q => IsRadioQuestion(q)) ?? false;
     }
 
-    private async Task HandleGroupRadioChange(int groupId, string value)
+
+    // Radios values change
+    private void MarcQuestions (int id, int value)
     {
-        try
+        for (int i = 1; i <= valuesSaver[id].Count();i++)
         {
-            groupResponses[groupId] = value;
-
-            var group = questions.FirstOrDefault(g => g.Id == groupId);
-            if (group?.Questions != null)
-            {
-                foreach (var question in group.Questions)
-                {
-                    if (IsRadioQuestion(question))
-                    {
-                        await HandleQuestionRadioChange(groupId, question.Id, value, true);
-                    }
-                }
-            }
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            await _message.Error($"Error al actualizar el grupo: {ex.Message}");
+            valuesSaver[id][i] = value;
         }
     }
 
-    private async Task HandleQuestionRadioChange(int groupId, int questionId, string value, bool isFromGroup = false)
+    private void unMarcGroups(int groupId, int value)
     {
-        try
+        if (value == 2)
         {
-            questionResponses[questionId] = value;
-
-            if (!isFromGroup)
-            {
-                // Verificar si todas las preguntas de tipo Radio del grupo tienen el mismo valor
-                var group = questions.FirstOrDefault(g => g.Id == groupId);
-                if (group?.Questions != null)
-                {
-                    var radioQuestions = group.Questions.Where(IsRadioQuestion).ToList();
-                    if (radioQuestions.Any())
-                    {
-                        bool allSameValue = radioQuestions.All(q =>
-                            questionResponses.ContainsKey(q.Id) &&
-                            questionResponses[q.Id] == value);
-
-                        groupResponses[groupId] = allSameValue ? value : string.Empty;
-                    }
-                }
-            }
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            await _message.Error($"Error al actualizar la pregunta: {ex.Message}");
+            groupsRaddioValues[groupId] = 2;
         }
     }
 }

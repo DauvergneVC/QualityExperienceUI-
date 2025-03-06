@@ -36,6 +36,7 @@
             @localizer["DrawerShowButton"]
         </Button>
     </Divider>
+
     <Drawer Closable="true" Width="720" Visible="showDrawer" Title="@(localizer["DrawerCreateTitle"].Value)" OnClose="_=>CloseOrCancel()">
 
         <CreateTemplate localizer="localizer" tooltipsLocalizer="tooltipsLocalizer" allClientsList="allClients" templateMetadata="templatesMetadata" OnTemplateCreated="HandleCreateTemplateButton" OnCancel="HandleCancelButton" />

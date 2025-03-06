@@ -69,14 +69,14 @@
     @* Modify all question data *@
     <Modal Visible="modifyAllQuestionDataModal"
     OkText="@(localizer["ModifyAllQuestion"].Value)"
-           OnOk="@OnModifyAllQuestionOkButton"
+    OnOk="@OnModifyAllQuestionOkButton"
     OnCancel="@OnCancelModalButton">
 
         <Header>
             @localizer["ModifyAllQuestion"]
         </Header>
         <ChildContent>
-            <ModifyAllQuestion localizer="localizer" templateId="templateId"
+            <ModifyAllQuestion @ref="modifyAllQuestion" localizer="localizer" templateId="templateId"
             questionMetadataDTO="questionsMetadata" questionsEvaluationControls="questionEvaluationsControls" groupsOfThisTemplate="allGroupsOfThisTemplate" questionToEdit="questionToEdit"/>
         </ChildContent>
     </Modal>
@@ -282,6 +282,12 @@
             var (formValid, model) = modifyAllQuestion.ValidateAndGetData();
             if (formValid)
             {
+                //
+                model.GroupId = model.GroupId == 0 ? null : model.GroupId;
+                model.SubGroupId = null;
+                model.IndicatorId = model.IndicatorId == 0 ? null : model.IndicatorId;
+
+
                 bool result = await _questionsCRUD.PutQuestionAsync(questionToEdit.Id, model);
 
                 if (result)

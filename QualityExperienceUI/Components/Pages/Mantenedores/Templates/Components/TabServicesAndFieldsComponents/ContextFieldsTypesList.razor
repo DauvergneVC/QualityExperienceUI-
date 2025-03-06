@@ -11,7 +11,7 @@
             </ListItemMeta>
 
             @* Content  down of title and description*@
-            <Switch Checked="context.Visible" Loading="@loading" />
+            <Switch Checked="context.Visible" Loading="@loading" OnClick="()=>ChangeSelector(context)" />
             <br />
             <br />
             <a @onclick="()=>OnNavegateToValues.InvokeAsync(context.Id)"
@@ -32,6 +32,8 @@
     [Parameter] public EventCallback<int> OnNavegateToValues { get; set; }
     [Parameter] public EventCallback<GetContextFieldsTypesDTO> OnUpdatedButton { get; set; }
     [Parameter] public EventCallback<int> OnDeletedButton { get; set; }
+    [Parameter] public EventCallback<GetContextFieldsTypesDTO> OnUpdateVisible { get; set; }
+
 
     // List parameters
     [Parameter] public List<GetContextFieldsTypesDTO>? allContextFieldsTypes { get; set; }
@@ -72,4 +74,10 @@
 
 
 
+    // Selects controls
+    private void ChangeSelector(GetContextFieldsTypesDTO context)
+    {
+        context.Visible = !context.Visible;
+        OnUpdateVisible.InvokeAsync(context);
+    }
 }

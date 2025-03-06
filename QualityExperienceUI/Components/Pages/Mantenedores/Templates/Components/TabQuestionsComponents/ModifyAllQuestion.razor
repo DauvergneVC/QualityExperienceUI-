@@ -2,127 +2,124 @@
 
 
 @* Form *@
-@if(ready)
-{
-    <Form @ref="form"
-    Model="@model"
-    ValidateOnChange="true"
-    Layout="FormLayout.Vertical"
-    Size="FormSize.Small">
+<Form @ref="form"
+Model="@model"
+ValidateOnChange="true"
+Layout="FormLayout.Vertical"
+Size="FormSize.Small">
 
-        
 
-        <FormItem Label="Id of subGroup" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.SubGroupId" />
-        </FormItem>
 
-        <FormItem Label="Id of indicator" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.IndicatorId" />
-        </FormItem>
+    <FormItem Label="Id of subGroup" >
+        <AntDesign.InputNumber @bind-Value="model.SubGroupId" />
+    </FormItem>
 
-        <FormItem Label="Question name" Rules="@(FormValidationRules.textRules)">
-            <Input @bind-Value="model.Name" />
-        </FormItem>
+    <FormItem Label="Id of indicator">
+        <AntDesign.InputNumber @bind-Value="model.IndicatorId" />
+    </FormItem>
 
-        <FormItem Label="Description" Rules="@(FormValidationRules.textRules)">
-            <Input @bind-Value="model.Description" />
-        </FormItem>
+    <FormItem Label="Question name" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="model.Name" />
+    </FormItem>
 
-        <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.Order" />
-        </FormItem>
+    <FormItem Label="Description" Rules="@(FormValidationRules.textRules)">
+        <Input @bind-Value="model.Description" />
+    </FormItem>
 
-        <FormItem Label="Critical question value" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.CriticalQuestionValue" />
-        </FormItem>
+    <FormItem Label="Order" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="model.Order" />
+    </FormItem>
 
-        <FormItem Label="Questiont type" Rules="@FormValidationRules.selectRules">
-            <Select DataSource="@questionTypesList"
-            TItemValue="string"
-            TItem="string"
-            EnableSearch
-            Placeholder="template type"
-            @bind-Value="model.Type"
-            DefaultActiveFirstOption="false"
-            DefaultValue='"0"'
-            Style="width: 150px">
-                <SelectOptions>
-                    @foreach (var item in questionTypesList)
-                    {
-                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
-                    }
-                </SelectOptions>
-            </Select>
-        </FormItem>
+    <FormItem Label="Critical question value" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="model.CriticalQuestionValue" />
+    </FormItem>
 
-        <FormItem Label="Status" Rules="@FormValidationRules.selectRules">
-            <Select DataSource="@questionStatusList"
-            TItemValue="string"
-            TItem="string"
-            EnableSearch
-            Placeholder="template type"
-            @bind-Value="model.Status"
-            DefaultActiveFirstOption="false"
-            DefaultValue='"0"'
-            Style="width: 150px">
-                <SelectOptions>
-                    @foreach (var item in questionStatusList)
-                    {
-                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
-                    }
-                </SelectOptions>
-            </Select>
-        </FormItem>
+    <FormItem Label="Questiont type" Rules="@FormValidationRules.selectRules">
+        <Select DataSource="@questionTypesList"
+        TItemValue="string"
+        TItem="string"
+        EnableSearch
+        Placeholder="template type"
+        @bind-Value="model.Type"
+        DefaultActiveFirstOption="true"
+        DefaultValue='"Evaluation"'
+        Style="width: 150px">
+            <SelectOptions>
+                @foreach (var item in questionTypesList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
 
-        <FormItem Label="Critical question" Rules="@FormValidationRules.selectRules">
-            <Select DataSource="@criticalQuestionList"
-            TItemValue="string"
-            TItem="string"
-            EnableSearch
-            @bind-Value="model.Critical"
-            DefaultActiveFirstOption="false"
-            DefaultValue='"0"'
-            Style="width: 150px">
-                <SelectOptions>
-                    @foreach (var item in criticalQuestionList)
-                    {
-                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
-                    }
-                </SelectOptions>
-            </Select>
-        </FormItem>
+    <FormItem Label="Status" Rules="@FormValidationRules.selectRules">
+        <Select DataSource="@questionStatusList"
+        TItemValue="string"
+        TItem="string"
+        EnableSearch
+        Placeholder="template type"
+        @bind-Value="model.Status"
+        DefaultActiveFirstOption="true"
+        DefaultValue='"Inactive"'
+        Style="width: 150px">
+            <SelectOptions>
+                @foreach (var item in questionStatusList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
 
-        <FormItem Label="Calculation type" Rules="@FormValidationRules.selectRules">
-            <Select DataSource="@calculationQuestionTypeList"
-            TItemValue="string"
-            TItem="string"
-            EnableSearch
-            @bind-Value="model.CalculationType"
-            DefaultActiveFirstOption="false"
-            DefaultValue='"0"'
-            Style="width: 150px">
-                <SelectOptions>
-                    @foreach (var item in calculationQuestionTypeList)
-                    {
-                        <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
-                    }
-                </SelectOptions>
-            </Select>
-        </FormItem>
+    <FormItem Label="Critical question" Rules="@FormValidationRules.selectRules">
+        <Select DataSource="@criticalQuestionList"
+        TItemValue="string"
+        TItem="string"
+        EnableSearch
+        @bind-Value="model.Critical"
+        DefaultActiveFirstOption="true"
+        DefaultValue='"No"'
+        Style="width: 150px">
+            <SelectOptions>
+                @foreach (var item in criticalQuestionList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
 
-        <FormItem Label="GlobalWeight" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.GlobalWeight" />
-        </FormItem>
+    <FormItem Label="Calculation type" Rules="@FormValidationRules.selectRules">
+        <Select DataSource="@calculationQuestionTypeList"
+        TItemValue="string"
+        TItem="string"
+        EnableSearch
+        @bind-Value="model.CalculationType"
+        DefaultActiveFirstOption="true"
+        DefaultValue='"Binary"'
+        Style="width: 150px">
+            <SelectOptions>
+                @foreach (var item in calculationQuestionTypeList)
+                {
+                    <SelectOption TItemValue="string" TItem="string" Value="@item.ToString()" Label="@item.ToString()" />
+                }
+            </SelectOptions>
+        </Select>
+    </FormItem>
 
-        <FormItem Label="Indicator weight" Rules="@(FormValidationRules.numericRules)">
-            <AntDesign.InputNumber @bind-Value="model.IndicatorWeight" />
-        </FormItem>
+    <FormItem Label="GlobalWeight" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="model.GlobalWeight" />
+    </FormItem>
 
-        
+    <FormItem Label="Indicator weight" Rules="@(FormValidationRules.numericRules)">
+        <AntDesign.InputNumber @bind-Value="model.IndicatorWeight" />
+    </FormItem>
 
-    </Form>
 
-}
+
+</Form>
+
 
 
 @code {
@@ -148,7 +145,6 @@
     private Dictionary<string, int> groupsIdNameDictionary = new();
     private Dictionary<string, int> evaluationControlsDictionary = new();
 
-    private bool ready = false;
 
 
 
@@ -156,6 +152,7 @@
     // Methods
     protected override void OnInitialized()
     {
+
         // Charge list
         if(questionMetadataDTO != null)
         {
@@ -175,7 +172,7 @@
 
 
         model.GroupId = questionToEdit?.GroupId ?? 0;
-        model.SubGroupId = questionToEdit?.SubGroupId == null ? 0 : questionToEdit?.SubGroupId;
+        model.SubGroupId = questionToEdit?.SubGroupId == 0? null : questionToEdit?.SubGroupId;
         model.Name = questionToEdit?.Name;
         model.Description = questionToEdit?.Description;
         model.Order = questionToEdit?.Order;
@@ -189,9 +186,7 @@
         model.QuestionEvaluationControlId = questionToEdit?.QuestionEvaluationControl?.Id == null ? 0 : questionToEdit?.QuestionEvaluationControl?.Id;
 
 
-        
-
-        ready = true;
+       
     }
 
     protected override void OnParametersSet()
@@ -218,6 +213,7 @@
     // To control
     public (bool formValidate, PutQuestionsDTO questionUpdated) ValidateAndGetData()
     {
+
         if (!form.Validate())
         {
             return (false, model);

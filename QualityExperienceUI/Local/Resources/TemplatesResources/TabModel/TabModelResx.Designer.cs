@@ -61,6 +61,15 @@ namespace QualityExperienceUI.Local.Resources.TemplatesResources.TabModel {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string TabModelContextCombosDivider {
+            get {
+                return ResourceManager.GetString("TabModelContextCombosDivider", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Model.
         /// </summary>
         public static string TabModelTitle {

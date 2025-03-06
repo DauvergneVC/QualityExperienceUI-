@@ -165,7 +165,7 @@ Size="FormSize.Small">
     [Parameter, Required] public GetTemplateMetadataDTO templateMetadata { get; set; } = default!;
 
     // Events
-    [Parameter] public EventCallback <(bool,PostTemplateDTO)> OnTemplateCreated { get; set; }
+    [Parameter] public EventCallback<(bool, PostTemplateDTO)> OnTemplateCreated { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 
     // Form vars

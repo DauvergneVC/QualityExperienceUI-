@@ -85,7 +85,6 @@
   <ItemGroup>
     <Folder Include="Components\Pages\Mantenedores\Templates\Components\SharedQuestionsMaqueta\" />
     <Folder Include="Components\Pages\NotificationsAndMessages\Components\" />
-    <Folder Include="Data\Services\UploadServices\" />
   </ItemGroup>
 
 </Project>
