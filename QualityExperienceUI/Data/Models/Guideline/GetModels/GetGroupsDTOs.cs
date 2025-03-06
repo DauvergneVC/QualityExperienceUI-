@@ -10,7 +10,7 @@
         public string? Description { get; set; }
         public int TemplateId { get; set; }
         public int GroupId { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
         public int Order { get; set; }
         public int GroupType { get; set; }
     }
@@ -23,7 +23,7 @@
         public string? GroupType { get; set; }
         public int TemplateId { get; set; }
         public int Order { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

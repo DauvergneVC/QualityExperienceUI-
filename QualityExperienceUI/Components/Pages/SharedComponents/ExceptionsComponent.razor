@@ -1,5 +1,70 @@
-﻿<h3>ExceptionsComponent</h3>
+﻿@inject INotificationService _notice
+
+<ErrorBoundary @ref="errorBoundary">
+    <ChildContent>
+        <Button Danger OnClick=@OnClick>
+            Click me to throw a error
+        </Button>
+    </ChildContent>
+    <ErrorContent Context="ex">
+        @{
+            ShowNotification(ex);
+        }
+    </ErrorContent>
+    
+</ErrorBoundary> 
+
+
 
 @code {
 
+    ErrorBoundary errorBoundary;
+
+    void OnClick()
+    {
+        try
+        {
+            throw new Exception("An Uncaught Error");
+        }
+        catch( Exception ex)
+        {
+            RenderFragment descriptionFragment = builder =>
+        {
+
+            builder.OpenElement(0, "p");
+            builder.AddAttribute(1, "style", "margin-bottom: 5px;");
+            builder.AddContent(2, "Error detallado:");
+            builder.CloseElement();
+
+            builder.OpenElement(3, "p");
+            builder.AddContent(4, ex.StackTrace);
+            builder.CloseElement();
+
+            // Button to action
+            builder.OpenElement(6, "a");
+            builder.AddContent(11, "action");
+            builder.CloseElement();
+        };
+
+            _ = _notice.Error(new NotificationConfig
+                {
+                    Message = ex.Message,
+                    Description = descriptionFragment,
+                    Duration = 0 // Para que no desaparezca automáticamente
+                });
+
+            errorBoundary.Recover();
+        }
+    }
+
+    void ShowNotification(Exception ex)
+    {
+        _ = _notice.Error(new()
+            {
+                Message = ex.Message,
+                Description = ex.StackTrace
+            });
+
+        errorBoundary.Recover();
+    }
 }

@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
         public int ClientId { get; set; }
         public string? Status { get; set; } // Associated with metadata
         public bool Archived { get; set; }
@@ -21,7 +21,7 @@
         public int Id { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
         public string? Status { get; set; } // Associated with metadata
         public string? CalculationType { get; set; } // Associated with metadata
         public string? AllowAttachment { get; set; } // Associated with metadata

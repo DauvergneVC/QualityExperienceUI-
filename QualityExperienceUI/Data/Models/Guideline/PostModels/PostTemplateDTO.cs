@@ -4,7 +4,7 @@
     {
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public int AuthorId { get; set; } = 0;
+        public string? AuthorId { get; set; } = "0";
         public int ClientId { get; set; } = 0;
         public string? CalculationType { get; set; } // Associated with metadata
         public string? AllowAttachment { get; set; } // Associated with metadata

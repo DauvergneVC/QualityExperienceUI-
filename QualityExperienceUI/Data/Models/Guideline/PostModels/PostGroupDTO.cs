@@ -6,6 +6,6 @@
         public string? Description { get; set; }
         public int TemplateId { get; set; }
         public int Order { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
     }
 }

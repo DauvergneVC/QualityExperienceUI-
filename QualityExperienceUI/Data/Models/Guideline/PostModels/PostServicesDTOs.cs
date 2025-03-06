@@ -5,7 +5,7 @@
         public string? Name { get; set; }
         public string? Description { get; set; }
         public int Order { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
         public int ServiceCategoryId { get; set; }
         public string? ServiceType { get; set; } // Use example of down, USE NUMBER
         public string? OperationType { get; set; } // Use example of down, USE NUMBER
@@ -42,6 +42,6 @@
         public string? Name { get; set; }
         public string? Description { get; set; }
         public int Order { get; set; }
-        public int AuthorId { get; set; }
+        public string? AuthorId { get; set; }
     }
 }
