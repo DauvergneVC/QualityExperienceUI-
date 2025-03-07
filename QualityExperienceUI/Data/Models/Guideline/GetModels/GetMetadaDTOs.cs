@@ -10,6 +10,7 @@ namespace QualityExperienceUI.Data.Models.Guideline.GetModels
     public class GetTemplateMetadataDTO
     {
         public List<MetadataNameValue> Status { get; set; } = new();
+        
         public List<MetadataNameValue> CalculationType { get; set; } = new();
         public List<MetadataNameValue> AllowAttachment { get; set; } = new();
         public List<MetadataNameValue> FeedbackType { get; set; } = new();

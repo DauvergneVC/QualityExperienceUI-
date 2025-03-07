@@ -125,6 +125,7 @@ Style="width: 200px;">
         startDate = null;
         endDate = null;
 
+        // El delay es porque al establecer los valores en null los select detectan un cambio y ejecytan su funcion, esto evita la ejecucion inmediata, permitieno que funcionen correctamente
         await Task.Delay(1);
         await ClearFilterTask.InvokeAsync();
 

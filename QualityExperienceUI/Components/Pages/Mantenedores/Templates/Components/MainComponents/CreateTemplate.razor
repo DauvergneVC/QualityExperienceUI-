@@ -165,6 +165,8 @@ Size="FormSize.Small">
     [Parameter, Required] public GetTemplateMetadataDTO templateMetadata { get; set; } = default!;
 
     // Events
+    // Los eventos solo permiten enviar 1 parametro, por eso se utiliza una Tupla para poder enviar mas, 
+    // todos los eventos o funciones que requieren mas de un parametro utilizan tuplas en caso de no aceptar varios elementos
     [Parameter] public EventCallback<(bool, PostTemplateDTO)> OnTemplateCreated { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
 

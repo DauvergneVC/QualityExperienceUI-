@@ -46,13 +46,28 @@
     <Modal
     Visible="@modalCreateContextField"
     OkText="@("CreateButton")"
-           OnOk="@OnCreateOkButton"
-           OnCancel="@OnCancelModalButton">
+    OnOk="@OnCreateOkButton"
+    OnCancel="@OnCancelModalButton">
         <Header>
             <span>Create context field Value</span>
         </Header>
         <ChildContent>
             <CreateContextValue @ref="createContextValue" contextFieldTypeID="contextTypeId"/>
+        </ChildContent>
+    </Modal>
+
+
+
+    @* Update modal *@
+    <Modal Visible="@modalUpdateContextField"
+           OkText="@("Update")"
+           OnOk="@OnUpdateOkButton"
+           OnCancel="@OnCancelModalButton">
+        <Header>
+            <span>Update context field Value</span>
+        </Header>
+        <ChildContent>
+            <UpdateContextValue @ref="updateContextValue" />
         </ChildContent>
     </Modal>
 }
@@ -64,24 +79,29 @@
     // Vars
     private bool isReady = false;
     private bool modalCreateContextField = false;
+    private bool modalUpdateContextField = false;
 
     // Lists
     private List<GetContextFielValuesdDTO> valuesList = new();
 
     // Renders
     private RenderFragment[] Actions(GetContextFielValuesdDTO item) => new RenderFragment[] {
-        builder => {
-                builder.OpenElement(0, "a");
-                builder.AddContent(2, "Edit");
-                builder.CloseElement();
-        },
-        builder => {
-                builder.OpenElement(0, "a");
-                builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, () => _contextFieldsCRUD.SoftDeleteContextFieldValueAsync(item.Id)));
-                builder.AddContent(2, "Delete");
-                builder.CloseElement();
-        }
-    };
+    builder => {
+            builder.OpenElement(0, "a");
+            builder.AddContent(2, "Edit");
+            builder.CloseElement();
+    },
+    builder => {
+            builder.OpenElement(0, "a");
+            builder.AddAttribute(1, "onclick", EventCallback.Factory.Create(this, async () => {
+                    await _contextFieldsCRUD.SoftDeleteContextFieldValueAsync(item.Id);
+                    await _message.Success("Exito");
+                }));
+            builder.AddContent(2, "Delete");
+            builder.CloseElement();
+    }
+};
+
 
 
     // Methods
@@ -134,6 +154,15 @@
             await _message.Error(ex.Message);
         }
     }
+
+
+    // Modal to Update
+    private UpdateContextValue updateContextValue = new();
+    private async Task OnUpdateOkButton()
+    {
+
+    }
+
 
     private void OnCancelModalButton()
     {
